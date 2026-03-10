@@ -196,6 +196,7 @@ video{width:100%;height:100%;object-fit:cover;display:block}
 
           <button class="gbtn" onclick="generate()">✦ Generate UR-IP</button>
           <button class="gbtn secondary" onclick="downloadSymbol()" style="margin-top:2px">↓ Unduh PNG</button>
+          <button class="gbtn secondary" onclick="decodeFromCanvas()" style="margin-top:2px">◈ Verifikasi Decode Canvas</button>
         </div>
       </div>
     </div>
@@ -681,31 +682,121 @@ function downloadSymbol() {
 
 // ── SCANNER ──
 async function startCamera() {
+  const rtxt = document.getElementById('scan-result-text');
+  const rmeta = document.getElementById('scan-result-meta');
+
+  // Check if getUserMedia is available at all
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    rtxt.textContent = '⚠ Kamera tidak tersedia di browser ini.';
+    rmeta.innerHTML = '<span style="color:var(--warn)">Tip: Buka file via server lokal atau gunakan Upload PNG di bawah</span>';
+    return;
+  }
+
+  // Check if page is served securely (required for camera on Android)
+  const isSecure = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+  if (!isSecure) {
+    rtxt.textContent = '⚠ Kamera memerlukan HTTPS.';
+    rmeta.innerHTML = '<span style="color:var(--warn)">File lokal tidak bisa akses kamera di Android. Gunakan fitur Upload PNG / JPG di bawah.</span>';
+    return;
+  }
+
   try {
-    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width:640, height:640 } });
-    document.getElementById('scan-video').srcObject = stream;
-    document.getElementById('scan-result-text').textContent = 'Kamera aktif — arahkan ke simbol UR-IP dan tekan Capture...';
+    // Try back camera first, fallback to any camera
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 1280 } }
+      });
+    } catch(e) {
+      stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    }
+    const video = document.getElementById('scan-video');
+    video.srcObject = stream;
+    await video.play();
+    rtxt.textContent = 'Kamera aktif — arahkan ke simbol UR-IP dan tekan Capture...';
+    rmeta.textContent = '';
+    // Start auto-scan loop
+    startScanLoop();
   } catch (e) {
-    document.getElementById('scan-result-text').textContent = '⚠ Kamera tidak bisa diakses: ' + e.message;
+    rtxt.textContent = '⚠ Kamera tidak bisa diakses.';
+    rmeta.innerHTML = `<span style="color:var(--err)">${e.message}</span> · Gunakan Upload PNG / JPG`;
   }
 }
 
 function stopCamera() {
   if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+  stopScanLoop();
   document.getElementById('scan-video').srcObject = null;
   document.getElementById('scan-result-text').textContent = 'Kamera dimatikan.';
+  document.getElementById('scan-result-meta').textContent = '';
+}
+
+// Auto scan loop — tries decode every 1.5s
+let scanLoopTimer = null;
+function startScanLoop() {
+  stopScanLoop();
+  scanLoopTimer = setInterval(() => {
+    const video = document.getElementById('scan-video');
+    if (!video.srcObject || video.paused || video.videoWidth === 0) return;
+    const cv = document.getElementById('scan-canvas');
+    const size = Math.min(video.videoWidth, video.videoHeight, 800);
+    cv.width = size; cv.height = size;
+    const ctx = cv.getContext('2d');
+    // Crop center square
+    const sx = (video.videoWidth - size) / 2;
+    const sy = (video.videoHeight - size) / 2;
+    ctx.drawImage(video, sx, sy, size, size, 0, 0, size, size);
+    // Try decode
+    const modes = ['LITE','STANDARD','DENSE','MAX'];
+    for (const mode of modes) {
+      const res = decodeFromCtx(ctx, size, size, mode, null);
+      if (res && res.ok) {
+        document.getElementById('scan-result-text').textContent = '✦ ' + res.text;
+        document.getElementById('scan-result-meta').innerHTML = `<span style="color:var(--ok)">✓ auto-scan</span> · ${mode}`;
+        stopScanLoop();
+        return;
+      }
+    }
+  }, 1500);
+}
+function stopScanLoop() {
+  if (scanLoopTimer) { clearInterval(scanLoopTimer); scanLoopTimer = null; }
 }
 
 function captureFrame() {
   const video = document.getElementById('scan-video');
-  if (!video.srcObject) { document.getElementById('scan-result-text').textContent = '⚠ Aktifkan kamera dulu.'; return; }
-  const canvas = document.getElementById('scan-canvas');
-  canvas.width = video.videoWidth || 640;
-  canvas.height = video.videoHeight || 640;
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(video, 0, 0);
-  document.getElementById('scan-result-text').textContent = 'Frame captured — fitur optical decode (Hough transform) dalam pengembangan v4.0. Gunakan decode manual sementara.';
-  document.getElementById('scan-result-meta').textContent = `Resolusi: ${canvas.width}×${canvas.height}px`;
+  const rtxt = document.getElementById('scan-result-text');
+  const rmeta = document.getElementById('scan-result-meta');
+  if (!video.srcObject) { rtxt.textContent = '⚠ Aktifkan kamera dulu.'; return; }
+  const cv = document.getElementById('scan-canvas');
+  const size = Math.min(video.videoWidth || 640, video.videoHeight || 640, 800);
+  cv.width = size; cv.height = size;
+  const ctx = cv.getContext('2d');
+  const sx = (video.videoWidth - size) / 2;
+  const sy = (video.videoHeight - size) / 2;
+  ctx.drawImage(video, sx, sy, size, size, 0, 0, size, size);
+
+  rtxt.textContent = '· memproses frame ·';
+  rmeta.textContent = `${size}×${size}px`;
+
+  setTimeout(() => {
+    const modes = ['LITE','STANDARD','DENSE','MAX'];
+    let best = null;
+    for (const mode of modes) {
+      const res = decodeFromCtx(ctx, size, size, mode, null);
+      if (res && res.ok) { best = {res, mode}; break; }
+      if (!best && res && res.text && res.text.replace(/[?]/g,'').length > 1) best = {res, mode};
+    }
+    if (best && best.res.ok) {
+      rtxt.textContent = '✦ ' + best.res.text;
+      rmeta.innerHTML = `<span style="color:var(--ok)">✓ CRC valid</span> · ${best.mode}`;
+    } else if (best) {
+      rtxt.textContent = '⚠ ' + (best.res.text || 'Terbaca sebagian');
+      rmeta.innerHTML = `<span style="color:var(--warn)">⚠ CRC mismatch</span> · ${best.mode} · coba Capture lagi`;
+    } else {
+      rtxt.textContent = 'Tidak terbaca — pastikan simbol di tengah frame';
+      rmeta.textContent = 'Coba lagi atau gunakan Upload PNG';
+    }
+  }, 30);
 }
 
 // ── MANUAL DECODE ──
@@ -763,46 +854,138 @@ document.getElementById('uzone').onclick = () => document.getElementById('filePi
 document.getElementById('filePick').onchange = function(e) {
   const file = e.target.files[0];
   if (!file) return;
-  document.getElementById('scan-result-text').textContent = '· memproses gambar ·';
-  document.getElementById('scan-result-meta').textContent = '';
+  const rtxt = document.getElementById('scan-result-text');
+  const rmeta = document.getElementById('scan-result-meta');
+  rtxt.textContent = '· memproses gambar ·';
+  rmeta.textContent = '';
+
   const img = new Image();
   img.onload = function() {
     const cv = document.getElementById('scan-canvas');
-    cv.width = img.width; cv.height = img.height;
+
+    // Resize if too large — speeds up decode significantly
+    const MAX_DIM = 800;
+    let W = img.width, H = img.height;
+    let scale = 1;
+    if (W > MAX_DIM || H > MAX_DIM) {
+      scale = MAX_DIM / Math.max(W, H);
+      W = Math.round(W * scale);
+      H = Math.round(H * scale);
+    }
+    cv.width = W; cv.height = H;
     cv.style.display = 'none';
     const ctx = cv.getContext('2d');
-    ctx.drawImage(img, 0, 0);
-    const W = img.width, H = img.height;
-    // Try to extract rotation from filename (URIP_..._rXXX.png)
+    ctx.drawImage(img, 0, 0, W, H);
+
+    // Extract rotation from filename
     const fname = file.name || '';
     const rMatch = fname.match(/_r(\d+)\.png$/i);
     const knownRotation = rMatch ? parseInt(rMatch[1]) : null;
-    // Try all 4 modes
-    const modes = ['LITE','STANDARD','DENSE','ULTRA'];
-    let best = null;
-    for (const mode of modes) {
-      const res = decodeFromCtx(ctx, W, H, mode, knownRotation);
-      if (res.ok) { best = {res, mode}; break; }
-      if (!best && res.text && res.text.replace(/[?]/g,'').trim().length > 0) best = {res, mode};
-    }
-    if (best) {
-      const {res, mode} = best;
-      if (res.ok) {
-        document.getElementById('scan-result-text').textContent = '✦ ' + res.text;
-        document.getElementById('scan-result-meta').textContent = mode + ' · CRC ✓ · decoded';
-      } else {
-        document.getElementById('scan-result-text').textContent = res.text || 'Tidak terbaca';
-        document.getElementById('scan-result-meta').textContent = mode + ' · CRC mismatch · coba mode lain';
+    const modeHint = ['LITE','STANDARD','DENSE','MAX'].find(m => fname.toUpperCase().includes(m)) || null;
+
+    rmeta.textContent = `${W}×${H}px · ${knownRotation !== null ? 'rotasi dari nama: '+knownRotation+'°' : 'rotasi tidak diketahui'} · scanning...`;
+
+    // Use setTimeout so UI updates before heavy decode
+    setTimeout(() => {
+      const modes = modeHint
+        ? [modeHint, ...['LITE','STANDARD','DENSE','MAX'].filter(m=>m!==modeHint)]
+        : ['LITE','STANDARD','DENSE','MAX'];
+
+      let best = null;
+      for (const mode of modes) {
+        rtxt.textContent = `· mencoba mode ${mode} ·`;
+        const res = decodeFromCtx(ctx, W, H, mode, knownRotation);
+        if (res && res.ok) { best = {res, mode}; break; }
+        if (!best && res && res.text && res.text.replace(/[?]/g,'').trim().length > 1) {
+          best = {res, mode};
+        }
       }
-    } else {
-      document.getElementById('scan-result-text').textContent = 'Tidak terbaca — pastikan gambar jelas dan pencahayaan cukup';
-      document.getElementById('scan-result-meta').textContent = W + '×' + H + 'px';
-    }
-    URL.revokeObjectURL(img.src);
-    e.target.value = '';
+
+      if (best) {
+        const {res, mode} = best;
+        if (res.ok) {
+          rtxt.textContent = '✦ ' + res.text;
+          rmeta.innerHTML = `<span style="color:var(--ok)">✓ CRC valid</span> · ${mode} · ${W}×${H}px · ${file.name}`;
+        } else {
+          rtxt.textContent = '⚠ ' + (res.text || 'Terbaca sebagian');
+          rmeta.innerHTML = `<span style="color:var(--warn)">⚠ CRC mismatch</span> · ${mode} · mungkin noise atau gambar tidak sempurna`;
+        }
+      } else {
+        rtxt.textContent = 'Tidak terbaca';
+        rmeta.innerHTML = `<span style="color:var(--err)">✗</span> · ${W}×${H}px · pastikan gambar UR-IP yang valid dan pencahayaan cukup`;
+      }
+      URL.revokeObjectURL(img.src);
+      e.target.value = '';
+    }, 30);
   };
   img.src = URL.createObjectURL(file);
 };
+
+function sampleArea(imgData, W, H, px, py, radius) {
+  // Sample NxN area around point, return average brightness
+  let sum = 0, cnt = 0;
+  const r = Math.max(1, Math.round(radius));
+  for (let dy = -r; dy <= r; dy++) {
+    for (let dx = -r; dx <= r; dx++) {
+      const x = Math.round(px + dx), y = Math.round(py + dy);
+      if (x >= 0 && x < W && y >= 0 && y < H) {
+        const i = (y * W + x) * 4;
+        sum += (imgData[i] + imgData[i+1] + imgData[i+2]) / 3;
+        cnt++;
+      }
+    }
+  }
+  return cnt > 0 ? sum / cnt : 128;
+}
+
+function otsuThreshold(imgData, W, H) {
+  // Otsu's method for optimal threshold
+  const hist = new Array(256).fill(0);
+  let total = 0;
+  for (let y = 0; y < H; y += 2) {
+    for (let x = 0; x < W; x += 2) {
+      const i = (y * W + x) * 4;
+      const v = Math.round((imgData[i] + imgData[i+1] + imgData[i+2]) / 3);
+      hist[v]++;
+      total++;
+    }
+  }
+  let sum = 0;
+  for (let i = 0; i < 256; i++) sum += i * hist[i];
+  let sumB = 0, wB = 0, wF = 0, maxVar = 0, thresh = 128;
+  for (let t = 0; t < 256; t++) {
+    wB += hist[t]; if (!wB) continue;
+    wF = total - wB; if (!wF) break;
+    sumB += t * hist[t];
+    const mB = sumB / wB, mF = (sum - sumB) / wF;
+    const variance = wB * wF * (mB - mF) * (mB - mF);
+    if (variance > maxVar) { maxVar = variance; thresh = t; }
+  }
+  return thresh;
+}
+
+function tryDecodeBits(imgData, W, H, cx, cy, maxR, turns, n, sa, thresh, invert) {
+  // Sample at MIDPOINT of each segment (i+0.5)/n
+  // Matches encoder: draws segment from t=i/n to t=(i+1)/n
+  let bits = [];
+  for (const off of [0, Math.PI]) {
+    for (let i = 0; i < n; i++) {
+      const tMid = (i + 0.5) / n;
+      const th = sa + off + tMid * turns * Math.PI * 2;
+      const r = maxR * (1 - tMid * 0.88);
+      // Sample radius proportional to half arc spacing
+      const arcSpacing = r * (turns * Math.PI * 2 / n);
+      const nodeR = Math.max(1.5, Math.min(arcSpacing * 0.4, maxR * 0.04));
+      const px = cx + r * Math.cos(th);
+      const py = cy + r * Math.sin(th);
+      const brightness = sampleArea(imgData, W, H, px, py, nodeR);
+      let bit = brightness < thresh ? 1 : 0;
+      if (invert) bit = 1 - bit;
+      bits.push(bit);
+    }
+  }
+  return bits;
+}
 
 function decodeFromCtx(ctx, W, H, modeName, knownRotation=null) {
   const mode = SYKLUS.MODES[modeName];
@@ -812,46 +995,76 @@ function decodeFromCtx(ctx, W, H, modeName, knownRotation=null) {
   const maxR = Math.min(W, H) * 0.42;
   const turns = mode.turns;
   const n = mode.nodesPerArm;
-  
-  // Adaptive threshold
-  let sum = 0, cnt = 0;
-  for (let y = 10; y < H-10; y += 8)
-    for (let x = 10; x < W-10; x += 8) {
-      const i = (y*W+x)*4;
-      sum += (imgData[i]+imgData[i+1]+imgData[i+2])/3; cnt++;
-    }
-  const thresh = (sum/cnt) * 0.55;
 
-  // If rotation known from filename, try that first; else brute-force 360
+  // Otsu threshold — much better than fixed ratio
+  const thresh = otsuThreshold(imgData, W, H);
+
+  // Build rotation list — known first, then full sweep
+  let rotations;
+  if (knownRotation !== null) {
+    // Try ±5 degrees around known rotation first
+    const near = [];
+    for (let d = 0; d <= 5; d++) {
+      near.push((knownRotation + d + 360) % 360);
+      if (d > 0) near.push((knownRotation - d + 360) % 360);
+    }
+    // Then full sweep as fallback
+    const rest = Array.from({length:360},(_,i)=>i).filter(r=>!near.includes(r));
+    rotations = [...near, ...rest];
+  } else {
+    rotations = Array.from({length:360},(_,i)=>i);
+  }
+
   let bestResult = null;
-  const rotations = knownRotation !== null
-    ? [knownRotation, knownRotation-1, knownRotation+1, knownRotation-2, knownRotation+2]
-    : Array.from({length:360},(_,i)=>i);
-  for (const ai of rotations) {
-    const sa = ((ai+360)%360) * (Math.PI/180);
-    let bits = [];
-    const half = n;
-    // Arm 0 and Arm 1 (offset π)
-    for (const off of [0, Math.PI]) {
-      for (let i = 0; i < n; i++) {
-        const t = i / n;
-        const th = sa + off + t * turns * Math.PI * 2;
-        const r = maxR * (1 - t * 0.88);
-        const px = Math.round(cx + r * Math.cos(th));
-        const py = Math.round(cy + r * Math.sin(th));
-        if (px >= 0 && px < W && py >= 0 && py < H) {
-          const idx = (py*W+px)*4;
-          bits.push((imgData[idx]+imgData[idx+1]+imgData[idx+2])/3 < thresh ? 1 : 0);
-        } else {
-          bits.push(0);
-        }
+  let bestScore = 0;
+
+  // Try normal + inverted threshold
+  for (const invert of [false, true]) {
+    for (const ai of rotations) {
+      const sa = ((ai + 360) % 360) * (Math.PI / 180);
+      const bits = tryDecodeBits(imgData, W, H, cx, cy, maxR, turns, n, sa, thresh, invert);
+      const res = SYKLUS.decode(bits, modeName);
+
+      if (res.ok) return res; // perfect decode — done
+
+      // Score partial result — count non-? chars
+      if (res.text) {
+        const score = res.text.replace(/[?]/g,'').length;
+        if (score > bestScore) { bestScore = score; bestResult = res; }
       }
     }
-    const res = SYKLUS.decode(bits, modeName);
-    if (res.ok) return res;
-    if (!bestResult && res.text && res.text.replace(/\?/g,'').length > 0) bestResult = res;
   }
+
   return bestResult || {ok:false, text:''};
+}
+
+function decodeFromCanvas() {
+  if (!lastEncoded) { alert('Generate simbol dulu!'); return; }
+  const canvas = document.getElementById('gen-canvas');
+  const W = canvas.width, H = canvas.height;
+  const ctx = canvas.getContext('2d');
+  const mode = lastEncoded.mode;
+  const modeData = SYKLUS.MODES[mode];
+  const imgData = ctx.getImageData(0, 0, W, H).data;
+  const cx = W/2, cy = H/2;
+  const maxR = Math.min(W,H) * 0.42;
+  const turns = modeData.turns;
+  const n = modeData.nodesPerArm;
+  const sa = (lastEncoded.hash % 360) * (Math.PI / 180);
+
+  const thresh = otsuThreshold(imgData, W, H);
+  const bits = tryDecodeBits(imgData, W, H, cx, cy, maxR, turns, n, sa, thresh, false);
+  const res = SYKLUS.decode(bits, mode);
+  showPage('scan');
+  const el = document.getElementById('scan-result-text');
+  const meta = document.getElementById('scan-result-meta');
+  if (res.ok) {
+    el.textContent = '✦ ' + res.text;
+    meta.innerHTML = `<span style="color:var(--ok)">✓ CRC valid</span> · ${mode} · Decode dari canvas berhasil!`;
+  } else {
+    el.textContent = res.text || 'Gagal';
+    meta.innerHTML = `<span style="color:var(--warn)">⚠ CRC mismatch</span> · ${mode} · bits aktif: ${bits.filter(b=>b).length}/${bits.length}`;
+  }
 }
 </script>
 </body>
