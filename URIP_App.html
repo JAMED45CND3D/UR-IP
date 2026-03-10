@@ -194,7 +194,7 @@ video{width:100%;height:100%;object-fit:cover;display:block}
             <span class="tog-lbl">Animasi Orbit</span>
           </div>
 
-          <button class="gbtn" onclick="generate()">✦ Generate SYKLUS</button>
+          <button class="gbtn" onclick="generate()">✦ Generate UR-IP</button>
           <button class="gbtn secondary" onclick="downloadSymbol()" style="margin-top:2px">↓ Unduh PNG</button>
         </div>
       </div>
@@ -312,7 +312,7 @@ video{width:100%;height:100%;object-fit:cover;display:block}
   <div class="about-layout">
     <div class="about-block">
       <div class="ab-tag">✦ uriplib.js v1.0</div>
-      <div class="ab-title">Library Core SYKLUS</div>
+      <div class="ab-title">Library Core UR-IP</div>
       <div class="ab-body">
         JavaScript library yang menangani semua logika encoding, decoding, drawing, dan error correction untuk simbol SYKLUS. <strong>Bisa dipakai di browser maupun Node.js.</strong>
       </div>
@@ -350,7 +350,7 @@ result.hasError <span class="c">// RS detected error</span>
     <div class="about-block">
       <div class="ab-tag">API · Draw</div>
       <div class="ab-title">URIP.draw(canvas, encodeResult, theme, animOffset)</div>
-      <div class="ab-body">Menggambar simbol SYKLUS ke HTML Canvas. <strong>Dua arm spiral, pusat Pancer, cardinal dots.</strong></div>
+      <div class="ab-body">Menggambar simbol UR-IP ke HTML Canvas. <strong>Dua arm spiral, pusat Pancer, cardinal dots.</strong></div>
       <div class="api-block">
 <span class="c">// Draw ke canvas</span>
 <span class="k">const</span> enc = SYKLUS.<span class="k">encode</span>(<span class="s">"test"</span>, <span class="s">"LITE"</span>);
@@ -382,7 +382,7 @@ SYKLUS.<span class="k">draw</span>(canvas, enc, <span class="s">"gold"</span>, <
       <div class="ab-tag">Filosofi</div>
       <div class="ab-title">Meaning first. Function inside.</div>
       <div class="ab-body">
-        SYKLUS tidak dirancang. SYKLUS <em>ditemukan</em> — dari sketsa tangan, dari pertanyaan yang tidak tahu jawabannya, dari simbol yang sudah ada miliaran tahun.<br><br>
+        UR-IP tidak dirancang. UR-IP <em>ditemukan</em> — dari sketsa tangan, dari pertanyaan yang tidak tahu jawabannya, dari simbol yang sudah ada miliaran tahun.<br><br>
         <strong>Pusat tidak ikut berputar.</strong> Pusat adalah anchor. Yang berputar adalah yang mengorbit.<br><br>
         <em>Recognition, bukan invention.</em>
       </div>
@@ -663,7 +663,7 @@ function setTheme(t, el) {
 function downloadSymbol() {
   if (!lastEncoded) return;
   const canvas = document.getElementById('gen-canvas');
-  const filename = `URIP_${lastEncoded.text.slice(0,20).replace(/\s/g,'_')}.png`;
+  const filename = `URIP_${lastEncoded.text.slice(0,20).replace(/\s/g,'_')}_r${lastEncoded.hash%360}.png`;
 
   // Method 1: Blob URL (works best on Android Chrome)
   canvas.toBlob(function(blob) {
@@ -772,14 +772,87 @@ document.getElementById('filePick').onchange = function(e) {
     cv.style.display = 'none';
     const ctx = cv.getContext('2d');
     ctx.drawImage(img, 0, 0);
-    document.getElementById('scan-result-text').textContent = 
-      'Gambar dimuat (' + img.width + '×' + img.height + 'px). Fitur optical decode (Hough transform) dalam pengembangan v4.0. Gunakan decode manual sementara.';
-    document.getElementById('scan-result-meta').textContent = 'Resolusi: ' + img.width + '×' + img.height + 'px';
+    const W = img.width, H = img.height;
+    // Try to extract rotation from filename (URIP_..._rXXX.png)
+    const fname = file.name || '';
+    const rMatch = fname.match(/_r(\d+)\.png$/i);
+    const knownRotation = rMatch ? parseInt(rMatch[1]) : null;
+    // Try all 4 modes
+    const modes = ['LITE','STANDARD','DENSE','ULTRA'];
+    let best = null;
+    for (const mode of modes) {
+      const res = decodeFromCtx(ctx, W, H, mode, knownRotation);
+      if (res.ok) { best = {res, mode}; break; }
+      if (!best && res.text && res.text.replace(/[?]/g,'').trim().length > 0) best = {res, mode};
+    }
+    if (best) {
+      const {res, mode} = best;
+      if (res.ok) {
+        document.getElementById('scan-result-text').textContent = '✦ ' + res.text;
+        document.getElementById('scan-result-meta').textContent = mode + ' · CRC ✓ · decoded';
+      } else {
+        document.getElementById('scan-result-text').textContent = res.text || 'Tidak terbaca';
+        document.getElementById('scan-result-meta').textContent = mode + ' · CRC mismatch · coba mode lain';
+      }
+    } else {
+      document.getElementById('scan-result-text').textContent = 'Tidak terbaca — pastikan gambar jelas dan pencahayaan cukup';
+      document.getElementById('scan-result-meta').textContent = W + '×' + H + 'px';
+    }
     URL.revokeObjectURL(img.src);
     e.target.value = '';
   };
   img.src = URL.createObjectURL(file);
 };
+
+function decodeFromCtx(ctx, W, H, modeName, knownRotation=null) {
+  const mode = SYKLUS.MODES[modeName];
+  if (!mode) return {ok:false, text:''};
+  const imgData = ctx.getImageData(0, 0, W, H).data;
+  const cx = W/2, cy = H/2;
+  const maxR = Math.min(W, H) * 0.42;
+  const turns = mode.turns;
+  const n = mode.nodesPerArm;
+  
+  // Adaptive threshold
+  let sum = 0, cnt = 0;
+  for (let y = 10; y < H-10; y += 8)
+    for (let x = 10; x < W-10; x += 8) {
+      const i = (y*W+x)*4;
+      sum += (imgData[i]+imgData[i+1]+imgData[i+2])/3; cnt++;
+    }
+  const thresh = (sum/cnt) * 0.55;
+
+  // If rotation known from filename, try that first; else brute-force 360
+  let bestResult = null;
+  const rotations = knownRotation !== null
+    ? [knownRotation, knownRotation-1, knownRotation+1, knownRotation-2, knownRotation+2]
+    : Array.from({length:360},(_,i)=>i);
+  for (const ai of rotations) {
+    const sa = ((ai+360)%360) * (Math.PI/180);
+    let bits = [];
+    const half = n;
+    // Arm 0 and Arm 1 (offset π)
+    for (const off of [0, Math.PI]) {
+      for (let i = 0; i < n; i++) {
+        const t = i / n;
+        const th = sa + off + t * turns * Math.PI * 2;
+        const r = maxR * (1 - t * 0.88);
+        const px = Math.round(cx + r * Math.cos(th));
+        const py = Math.round(cy + r * Math.sin(th));
+        if (px >= 0 && px < W && py >= 0 && py < H) {
+          const idx = (py*W+px)*4;
+          bits.push((imgData[idx]+imgData[idx+1]+imgData[idx+2])/3 < thresh ? 1 : 0);
+        } else {
+          bits.push(0);
+        }
+      }
+    }
+    const res = SYKLUS.decode(bits, modeName);
+    if (res.ok) return res;
+    if (!bestResult && res.text && res.text.replace(/\?/g,'').length > 0) bestResult = res;
+  }
+  return bestResult || {ok:false, text:''};
+}
 </script>
 </body>
 </html>
