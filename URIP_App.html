@@ -256,6 +256,13 @@ video{width:100%;height:100%;object-fit:cover;display:block}
         <button class="gbtn secondary" onclick="stopCamera()" style="flex:1;padding:10px">■ Stop</button>
         <button class="gbtn secondary" onclick="captureFrame()" style="flex:1;padding:10px">◎ Capture</button>
       </div>
+      <div style="padding:12px 20px;border-top:1px solid var(--b1)">
+        <div class="lbl" style="margin-bottom:8px">Upload Gambar Simbol</div>
+        <div id="uzone" style="border:1px dashed var(--gold);border-radius:4px;padding:18px;text-align:center;cursor:pointer;color:var(--gold);font-family:var(--mono);font-size:12px;letter-spacing:.08em">
+          ↑ TAP PILIH FILE PNG / JPG
+        </div>
+        <input type="file" id="filePick" accept="image/*" style="display:none">
+      </div>
       <div class="scan-result">
         <div class="sr-label">Hasil Scan</div>
         <div class="sr-text" id="scan-result-text">Arahkan kamera ke simbol UR-IP...</div>
@@ -750,6 +757,29 @@ function runTest() {
 // ── INIT ──
 URIP.drawEmpty(document.getElementById('gen-canvas'), 'gold');
 document.getElementById('gen-input').addEventListener('keydown', e => { if(e.key==='Enter'&&e.ctrlKey) generate(); });
+
+// ── UPLOAD IMAGE SCANNER ──
+document.getElementById('uzone').onclick = () => document.getElementById('filePick').click();
+document.getElementById('filePick').onchange = function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  document.getElementById('scan-result-text').textContent = '· memproses gambar ·';
+  document.getElementById('scan-result-meta').textContent = '';
+  const img = new Image();
+  img.onload = function() {
+    const cv = document.getElementById('scan-canvas');
+    cv.width = img.width; cv.height = img.height;
+    cv.style.display = 'none';
+    const ctx = cv.getContext('2d');
+    ctx.drawImage(img, 0, 0);
+    document.getElementById('scan-result-text').textContent = 
+      'Gambar dimuat (' + img.width + '×' + img.height + 'px). Fitur optical decode (Hough transform) dalam pengembangan v4.0. Gunakan decode manual sementara.';
+    document.getElementById('scan-result-meta').textContent = 'Resolusi: ' + img.width + '×' + img.height + 'px';
+    URL.revokeObjectURL(img.src);
+    e.target.value = '';
+  };
+  img.src = URL.createObjectURL(file);
+};
 </script>
 </body>
 </html>
