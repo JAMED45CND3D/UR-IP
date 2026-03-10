@@ -651,10 +651,20 @@ function setTheme(t, el) {
 function downloadSymbol() {
   if (!lastEncoded) return;
   const canvas = document.getElementById('gen-canvas');
-  const link = document.createElement('a');
-  link.download = `SYKLUS_${lastEncoded.text.slice(0,20).replace(/\s/g,'_')}.png`;
-  link.href = canvas.toDataURL('image/png');
-  link.click();
+  const filename = `URIP_${lastEncoded.text.slice(0,20).replace(/\s/g,'_')}.png`;
+
+  // Method 1: Blob URL (works best on Android Chrome)
+  canvas.toBlob(function(blob) {
+    if (!blob) return;
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.download = filename;
+    link.href = url;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(() => URL.revokeObjectURL(url), 3000);
+  }, 'image/png');
 }
 
 // ── SCANNER ──
