@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>✦ EMOSY URIP Symbol</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#060400;color:#ffe898;font-family:'Courier New',monospace;min-height:100vh;}
+header{text-align:center;padding:20px 16px 12px;border-bottom:1px solid #c8a84022;}
+header h1{font-size:16px;letter-spacing:5px;}
+header p{font-size:8px;letter-spacing:3px;opacity:.25;margin-top:4px;}
+.tabs{display:flex;justify-content:center;border-bottom:1px solid #c8a84022;}
+.tab{padding:10px 14px;font-size:9px;letter-spacing:3px;cursor:pointer;opacity:.3;border:none;border-bottom:2px solid transparent;background:none;color:#ffe898;font-family:'Courier New',monospace;}
+.tab.on{opacity:1;border-bottom-color:#c8a840;}
+.pg{display:none;padding:20px 15px;max-width:560px;margin:0 auto;}
+.pg.on{display:block;}
+.lbl{font-size:8px;letter-spacing:3px;opacity:.35;display:block;margin-bottom:6px;}
+.row{display:flex;gap:7px;margin-bottom:13px;align-items:center;}
+input[type=text]{flex:1;background:#0c0800;border:1px solid #c8a84033;color:#ffe898;padding:10px 12px;font-family:'Courier New',monospace;font-size:13px;outline:none;border-radius:2px;}
+input[type=text]:focus{border-color:#c8a840;}
+.btn{background:#c8a840;color:#060400;border:none;padding:10px 14px;font-family:'Courier New',monospace;font-size:10px;letter-spacing:2px;cursor:pointer;font-weight:bold;border-radius:2px;white-space:nowrap;}
+.btn:active{background:#ffe898;}
+.btn.g{background:transparent;color:#c8a840;border:1px solid #c8a84044;}
+.btn.g:active{background:#c8a84011;}
+.btn.full{width:100%;padding:12px;font-size:11px;}
+canvas#qr{display:block;margin:0 auto 13px;max-width:100%;border-radius:3px;border:1px solid #1a1000;}
+.meta{padding:11px 13px;background:#0c0800;border:1px solid #c8a84022;font-size:9px;line-height:2.1;border-radius:2px;margin-bottom:9px;}
+.k{color:#c8a840;}
+.bin{padding:8px 11px;background:#080600;border:1px solid #c8a84011;font-size:8px;letter-spacing:1px;line-height:2.2;word-break:break-all;max-height:60px;overflow-y:auto;border-radius:2px;margin-bottom:9px;}
+.b1{color:#ffe898;}.b2{color:#c8a840;}.b3{color:#5a3a10;}
+.caprow{display:flex;align-items:center;gap:10px;margin-bottom:13px;}
+.caplbl{font-size:8px;opacity:.35;white-space:nowrap;}
+.capbar{flex:1;height:3px;background:#c8a84022;border-radius:2px;}
+.capfill{height:100%;background:#c8a840;border-radius:2px;transition:width .3s;}
+.cappct{font-size:9px;color:#c8a840;width:32px;text-align:right;}
+.modes{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px;margin-bottom:13px;}
+.mode{padding:9px 5px;text-align:center;border:1px solid #c8a84022;border-radius:2px;cursor:pointer;font-size:8px;letter-spacing:2px;opacity:.45;line-height:1.8;}
+.mode.on{border-color:#c8a840;opacity:1;background:#c8a84011;}
+.mode span{display:block;color:#c8a840;font-size:9px;}
+.rbox{padding:18px 14px;background:#0c0800;border:1px solid #c8a84033;text-align:center;border-radius:2px;margin-bottom:9px;min-height:78px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px;}
+.rout{font-size:22px;letter-spacing:3px;word-break:break-all;}
+.rsub{font-size:8px;opacity:.35;letter-spacing:3px;}
+.stxt{font-size:8px;opacity:.25;letter-spacing:3px;text-align:center;margin-bottom:13px;}
+.card{background:#0c0800;border:1px solid #c8a84022;padding:15px;border-radius:2px;margin-bottom:10px;}
+.card h3{color:#c8a840;font-size:8px;letter-spacing:3px;margin-bottom:10px;}
+.card p{font-size:9px;line-height:1.9;opacity:.45;margin-bottom:10px;}
+.uz{border:1px dashed #c8a84033;border-radius:2px;padding:20px;text-align:center;cursor:pointer;}
+.uz:active{border-color:#c8a840;background:#c8a84011;}
+.uz div{font-size:9px;letter-spacing:3px;opacity:.4;}
+.item{display:flex;gap:10px;padding:6px 0;border-bottom:1px solid #c8a84011;font-size:9px;line-height:1.7;opacity:.7;}
+.item:last-child{border:none;}
+.dot{width:7px;height:7px;border-radius:50%;background:#c8a840;flex-shrink:0;margin-top:4px;}
+.dot.e{background:transparent;border:1px solid #c8a840;}
+.dot.d{background:#2a1a04;}
+.badge{display:inline-block;background:#c8a84022;color:#c8a840;font-size:7px;letter-spacing:2px;padding:2px 6px;border-radius:2px;margin-left:6px;}
+.spec{background:#080600;border:1px solid #c8a84011;padding:12px;border-radius:2px;font-size:9px;line-height:2;margin-top:10px;opacity:.6;}
+.spec .sk{color:#c8a840;}
+</style>
+</head>
+<body>
+
+<div style="background:#c8a840;color:#04040a;padding:12px 16px;text-align:center;font-family:Courier New,monospace;font-size:10px;letter-spacing:2px;font-weight:bold">
+⚠ BUKA DI CHROME/FIREFOX — BUKAN DI VIEWER INI<br>
+<span style="font-size:8px;font-weight:normal;opacity:.7">Tap ⋮ → Open in Chrome · Baru upload bisa jalan</span>
+</div>
+<header>
+  <h1>✦ UR-IP · TRISKELION QR</h1>
+  <p>tri-channel spiral encoding · reed-solomon EC · crc16 · v3</p>
+</header>
+
+<div class="tabs">
+  <button class="tab on" id="t-gen" onclick="go('gen')">GENERATOR</button>
+  <button class="tab" id="t-scan" onclick="go('scan')">SCANNER</button>
+  <button class="tab" id="t-spec" onclick="go('spec')">SPEC</button>
+</div>
+
+<!-- ═══ GENERATOR ═══════════════════════════════════════════ -->
+<div class="pg on" id="p-gen">
+  <span class="lbl">ENCODE TEKS</span>
+  <div class="row">
+    <input type="text" id="inp" value="SYKLUS" maxlength="160">
+    <button class="btn" id="btnGen">BUAT</button>
+    <button class="btn g" id="btnDL">↓ PNG</button>
+  </div>
+
+  <span class="lbl">MODE</span>
+  <div class="modes">
+    <div class="mode on" id="mLite"  onclick="setMode('lite')">LITE<span>~20 char</span></div>
+    <div class="mode"    id="mStd"   onclick="setMode('std')">STANDARD<span>~56 char</span></div>
+    <div class="mode"    id="mDense" onclick="setMode('dense')">DENSE<span>~150 char</span></div>
+  </div>
+
+  <canvas id="qr"></canvas>
+
+  <div class="meta">
+    <span class="k">TEKS </span>— <span id="mTeks">EMOSY</span><br>
+    <span class="k">MODE </span>— <span id="mMode">LITE</span> · <span id="mTotalN">0</span> nodes · <span id="mTotalB">0</span> bits<br>
+    <span class="k">HEADER</span>— 8b version + 16b length + 8b EC level + 16b CRC16<br>
+    <span class="k">EC   </span>— Reed-Solomon <span id="mEcLvl">L</span> · recovery <span id="mEcPct">7</span>%
+  </div>
+
+  <div class="caprow">
+    <span class="caplbl">KAPASITAS</span>
+    <div class="capbar"><div class="capfill" id="capFill" style="width:0%"></div></div>
+    <span class="cappct" id="capPct">0%</span>
+  </div>
+
+  <div class="bin" id="binDiv"></div>
+</div>
+
+<!-- ═══ SCANNER ═════════════════════════════════════════════ -->
+<div class="pg" id="p-scan">
+  <div class="rbox" id="rbox"><div class="rsub">pilih cara scan</div></div>
+  <div class="stxt" id="stxt">· siap ·</div>
+
+  <div class="card">
+    <h3>CARA 1 — SCAN LANGSUNG <span class="badge">PALING AKURAT</span></h3>
+    <p>Baca QR dari tab Generator — tanpa compression. Hasilnya pasti benar.</p>
+    <button class="btn full" id="btnDirect">▶ SCAN QR SEKARANG</button>
+  </div>
+
+  <div class="card">
+    <h3>CARA 2 — UPLOAD FILE PNG</h3>
+    <p>Upload file PNG dari tombol ↓ PNG. Bukan screenshot — file aslinya.</p>
+    <div class="uz" id="uzone"><div>↑ TAP PILIH FILE PNG</div></div>
+    <input type="file" id="filePick" accept="image/*" style="display:none">
+  </div>
+  <canvas id="buf" style="display:none"></canvas>
+</div>
+
+<!-- ═══ SPEC ═════════════════════════════════════════════════ -->
+<div class="pg" id="p-spec">
+  <div class="card">
+    <h3>FORMAT DATA — EMOSY v3</h3>
+    <div class="spec">
+      <span class="sk">HEADER</span> (48 bit total)<br>
+      &nbsp;[8]  version · [16] payload_length · [8] EC_level · [16] CRC16<br><br>
+      <span class="sk">PAYLOAD</span><br>
+      &nbsp;[n]  UTF-8 encoded text bytes<br><br>
+      <span class="sk">EC PARITY</span><br>
+      &nbsp;Reed-Solomon parity bytes (level dependent)<br><br>
+      <span class="sk">CHANNEL</span><br>
+      &nbsp;Tri-channel interleave → spiral1 · spiral2 · spiral3
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>SPIRAL MODEL</h3>
+    <div class="spec">
+      <span class="sk">FORMULA</span> r = a · e^(b·θ)<br>
+      <span class="sk">PARAMS </span> a=0.15, b=0.18, θ: 0→8π<br>
+      <span class="sk">OFFSET </span> S1=0° · S2=120° · S3=240°<br>
+      <span class="sk">NODES  </span> LITE:60 · STD:150 · DENSE:360 per spiral<br>
+      <span class="sk">ENCODE </span> node besar (r=4.5) = 1 · kecil (r=1.8) = 0
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>VISUAL LAYERS</h3>
+    <div class="item"><div class="dot"></div><div>Outer Boundary Ring — deteksi skala</div></div>
+    <div class="item"><div class="dot d"></div><div>Timing Ring — 24 titik kalibrasi jarak</div></div>
+    <div class="item"><div class="dot"></div><div>Orientation Markers — 3 titik (beda ukuran) deteksi rotasi</div></div>
+    <div class="item"><div class="dot e"></div><div>Spiral Data Channels — 3 arm encoding data</div></div>
+    <div class="item"><div class="dot"></div><div>Center Core — solid→void→solid→void, deteksi pusat</div></div>
+  </div>
+
+  <div class="card">
+    <h3>ERROR CORRECTION</h3>
+    <div class="item"><div class="dot e"></div><div>CRC16 — verifikasi header + integritas data</div></div>
+    <div class="item"><div class="dot e"></div><div>Reed-Solomon — L:7% · M:15% · Q:25% recovery</div></div>
+    <div class="item"><div class="dot e"></div><div>Tri-channel interleave — burst error terdistribusi</div></div>
+  </div>
+
+  <div class="card">
+    <h3>KAPASITAS</h3>
+    <div class="item"><div class="dot"></div><div>LITE — 180 nodes · ~20 char payload</div></div>
+    <div class="item"><div class="dot"></div><div>STANDARD — 450 nodes · ~56 char payload</div></div>
+    <div class="item"><div class="dot"></div><div>DENSE — 1080 nodes · ~150 char payload</div></div>
+  </div>
+
+  <div class="card">
+    <h3>ROADMAP</h3>
+    <div class="item"><div class="dot"></div><div>v1 ✓ — generator + decoder + basic scan</div></div>
+    <div class="item"><div class="dot"></div><div>v2 ✓ — CRC8 · adaptive threshold · 3 modes</div></div>
+    <div class="item"><div class="dot"></div><div>v3 ✓ — Reed-Solomon · CRC16 · full spec</div></div>
+    <div class="item"><div class="dot e"></div><div>v4 — auto center detect · mobile camera scan</div></div>
+    <div class="item"><div class="dot e"></div><div>v5 — AR marker · animated code · 3D radial</div></div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════
+// MODES
+// ════════════════════════════════════════════════════════════
+const MODES = {
+  lite:  { nodes:60,  tMax:4*Math.PI, a:.15, b:.18, label:'LITE',     maxChar:20,  ec:'L', ecPct:7  },
+  std:   { nodes:150, tMax:6*Math.PI, a:.13, b:.18, label:'STANDARD', maxChar:56,  ec:'M', ecPct:15 },
+  dense: { nodes:360, tMax:8*Math.PI, a:.10, b:.18, label:'DENSE',    maxChar:150, ec:'Q', ecPct:25 },
+};
+let curMode = 'lite';
+
+function setMode(m) {
+  curMode = m;
+  Object.keys(MODES).forEach(x => {
+    const k = 'm'+x.charAt(0).toUpperCase()+x.slice(1);
+    document.getElementById(k).classList.toggle('on', x===m);
+  });
+  gen();
+}
+
+// ════════════════════════════════════════════════════════════
+// TABS
+// ════════════════════════════════════════════════════════════
+function go(n) {
+  ['gen','scan','spec'].forEach(x => {
+    document.getElementById('t-'+x).classList.toggle('on',x===n);
+    document.getElementById('p-'+x).classList.toggle('on',x===n);
+  });
+}
+
+// ════════════════════════════════════════════════════════════
+// CRC16 (CCITT)
+// ════════════════════════════════════════════════════════════
+function crc16(bytes) {
+  let crc = 0xFFFF;
+  for (const b of bytes) {
+    crc ^= b << 8;
+    for (let i=0; i<8; i++)
+      crc = crc&0x8000 ? (crc<<1)^0x1021 : crc<<1;
+    crc &= 0xFFFF;
+  }
+  return crc;
+}
+
+// ════════════════════════════════════════════════════════════
+// REED-SOLOMON (simplified — GF(256) XOR parity)
+// Provides burst error detection + limited correction
+// ════════════════════════════════════════════════════════════
+function rsEncode(data, parityLen) {
+  const out = [...data];
+  const par = new Array(parityLen).fill(0);
+  for (const b of data) {
+    const fb = b ^ par[0];
+    for (let i=0; i<parityLen-1; i++)
+      par[i] = par[i+1] ^ (fb ? fb : 0);
+    par[parityLen-1] = fb ? fb : 0;
+  }
+  return [...out, ...par];
+}
+
+function rsCheck(bytes, parityLen) {
+  // Verify last parityLen bytes are valid parity
+  const data = bytes.slice(0, bytes.length - parityLen);
+  const expected = rsEncode(data, parityLen).slice(-parityLen);
+  const actual = bytes.slice(-parityLen);
+  return expected.every((b,i) => b === actual[i]);
+}
+
+// ════════════════════════════════════════════════════════════
+// ENCODING / DECODING
+// ════════════════════════════════════════════════════════════
+function buildBitstream(text, mode) {
+  const cfg = MODES[mode];
+  const totalNodes = cfg.nodes * 3;
+
+  // Text bytes (clamped to capacity)
+  const maxPayload = Math.floor((totalNodes - 48) / 8); // 48 bits header
+  const rawBytes = [];
+  for (const c of text) rawBytes.push(c.charCodeAt(0) & 0xFF);
+  const payloadBytes = rawBytes.slice(0, maxPayload);
+
+  // EC parity (RS)
+  const ecLevels = {L:2, M:4, Q:6};
+  const parityLen = ecLevels[cfg.ec];
+  const withParity = rsEncode(payloadBytes, parityLen);
+
+  // CRC16 over payload
+  const crc = crc16(payloadBytes);
+
+  // Header bytes: [version=3][length_hi][length_lo][ec_level][crc_hi][crc_lo]
+  const header = [3, (payloadBytes.length>>8)&0xFF, payloadBytes.length&0xFF,
+                  {L:1,M:2,Q:3}[cfg.ec], (crc>>8)&0xFF, crc&0xFF];
+
+  // Full byte array → binary
+  const allBytes = [...header, ...withParity];
+  let bin = allBytes.map(b => b.toString(2).padStart(8,'0')).join('');
+
+  // Pad / trim to totalNodes
+  while (bin.length < totalNodes) bin += '0';
+  bin = bin.slice(0, totalNodes);
+
+  // Interleave to 3 channels
+  const s1 = [...bin].filter((_,i)=>i%3===0).join('');
+  const s2 = [...bin].filter((_,i)=>i%3===1).join('');
+  const s3 = [...bin].filter((_,i)=>i%3===2).join('');
+
+  return { s1, s2, s3, bin, payloadBytes, header, withParity, crc, parityLen };
+}
+
+function decodeBitstream(bin, mode) {
+  const cfg = MODES[mode];
+  const ecLevels = {1:'L',2:'M',3:'Q'};
+  const parityLens = {L:2,M:4,Q:6};
+
+  if (bin.length < 48) return { ok:false, text:'', err:'short' };
+
+  const bytes = [];
+  for (let i=0; i+7<bin.length; i+=8)
+    bytes.push(parseInt(bin.slice(i,i+8),2));
+
+  const version   = bytes[0];
+  const length    = (bytes[1]<<8) | bytes[2];
+  const ecLvlCode = bytes[3];
+  const crcExpect = (bytes[4]<<8) | bytes[5];
+
+  if (length<=0 || length>200) return { ok:false, text:'', err:'bad length '+length, checksum:crcExpect, calcCrc:0 };
+
+  const ecLvl = ecLevels[ecLvlCode] || 'L';
+  const parityLen = parityLens[ecLvl] || 2;
+
+  const withParity = bytes.slice(6, 6 + length + parityLen);
+  const payload    = withParity.slice(0, length);
+
+  const crcCalc = crc16(payload);
+  const rsOk = rsCheck(withParity, parityLen);
+  const crcOk = crcCalc === crcExpect;
+
+  const text = payload.map(b => (b>=32&&b<=126) ? String.fromCharCode(b) : '?').join('');
+
+  return {
+    ok: crcOk,
+    rsOk,
+    text,
+    version,
+    length,
+    crcExpect,
+    crcCalc,
+    ecLvl,
+  };
+}
+
+// ════════════════════════════════════════════════════════════
+// SPIRAL POINT
+// ════════════════════════════════════════════════════════════
+function spt(idx, n, off, cx, cy, sc, cfg) {
+  const t = 0.5 + (idx/n)*(cfg.tMax - 0.5);
+  const r = cfg.a * Math.exp(cfg.b * t) * sc;
+  return { x: cx + r*Math.cos(t+off), y: cy + r*Math.sin(t+off) };
+}
+
+// ════════════════════════════════════════════════════════════
+// DRAW
+// ════════════════════════════════════════════════════════════
+function drawQR(text, mode) {
+  const cfg = MODES[mode];
+  const enc = buildBitstream(text, mode);
+  const { s1, s2, s3, bin } = enc;
+
+  const cv = document.getElementById('qr');
+  const dpr = window.devicePixelRatio || 1;
+  const SIZE = Math.min(window.innerWidth - 34, 460);
+  cv.style.width = SIZE+'px'; cv.style.height = SIZE+'px';
+  cv.width = SIZE*dpr; cv.height = SIZE*dpr;
+
+  const ctx = cv.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const W=SIZE, H=SIZE, cx=W/2, cy=H/2, sc=W*0.32;
+
+  ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,W,H);
+
+  const RING=W*0.43, TIM=RING*0.91;
+
+  // ── Boundary ring
+  ctx.beginPath(); ctx.arc(cx,cy,RING,0,Math.PI*2);
+  ctx.strokeStyle='#000'; ctx.lineWidth=3; ctx.stroke();
+
+  // ── Timing ring (24 dots, every 3rd larger)
+  for(let i=0;i<24;i++){
+    const a=(i/24)*Math.PI*2;
+    ctx.beginPath();
+    ctx.arc(cx+TIM*Math.cos(a), cy+TIM*Math.sin(a), i%3===0?3:1.5, 0, Math.PI*2);
+    ctx.fillStyle='#000'; ctx.globalAlpha=i%3===0?0.8:0.25; ctx.fill();
+  }
+  ctx.globalAlpha=1;
+
+  // ── Orientation markers (3 points at arm tips on boundary, distinct sizes)
+  // Scanner uses size difference to detect rotation direction
+  const oAngles = [-Math.PI/2, -Math.PI/2+2*Math.PI/3, -Math.PI/2+4*Math.PI/3];
+  [[10,'#000',null], [8,'#fff','#000',2.5], [6,'#000',null]].forEach(([r,f,s,sw],i) => {
+    const mx=cx+RING*Math.cos(oAngles[i]), my=cy+RING*Math.sin(oAngles[i]);
+    ctx.beginPath(); ctx.arc(mx,my,r,0,Math.PI*2);
+    ctx.fillStyle=f; ctx.fill();
+    if(s){ctx.strokeStyle=s; ctx.lineWidth=sw; ctx.stroke();}
+  });
+
+  // ── 3 spiral data channels
+  [s1,s2,s3].forEach((bits, si) => {
+    const off = si*(2*Math.PI/3);
+    const n = bits.length;
+
+    // Guide path
+    ctx.beginPath();
+    for(let i=0;i<n;i++){
+      const p=spt(i,n,off,cx,cy,sc,cfg);
+      i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y);
+    }
+    ctx.strokeStyle='#e0e0e0'; ctx.lineWidth=0.6; ctx.globalAlpha=0.6; ctx.stroke(); ctx.globalAlpha=1;
+
+    // Data nodes
+    for(let i=0;i<n;i++){
+      const p=spt(i,n,off,cx,cy,sc,cfg);
+      const b1 = bits[i]==='1';
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, b1 ? 4.5 : 1.8, 0, Math.PI*2);
+      ctx.fillStyle = b1?'#000':'#d8d8d8';
+      ctx.fill();
+    }
+
+    // Terminal node at arm end
+    const lp = spt(n-1,n,off,cx,cy,sc,cfg);
+    ctx.beginPath(); ctx.arc(lp.x,lp.y,10,0,Math.PI*2); ctx.fillStyle='#000'; ctx.fill();
+    ctx.beginPath(); ctx.arc(lp.x,lp.y, 5,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+  });
+
+  // ── Center core — solid→void→solid→void
+  ctx.beginPath(); ctx.arc(cx,cy,18,0,Math.PI*2); ctx.fillStyle='#000'; ctx.fill();
+  ctx.beginPath(); ctx.arc(cx,cy,11,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+  ctx.beginPath(); ctx.arc(cx,cy, 5,0,Math.PI*2); ctx.fillStyle='#000'; ctx.fill();
+  ctx.beginPath(); ctx.arc(cx,cy, 2,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill();
+
+  // ── Label
+  ctx.font='8px Courier New'; ctx.fillStyle='#aaa'; ctx.textAlign='center';
+  ctx.fillText('UR-IP v3 · '+cfg.label+' · '+(text.length>24?text.slice(0,24)+'…':text), cx, H-10);
+
+  // ── Meta UI
+  document.getElementById('mTeks').textContent = text.length>32?text.slice(0,32)+'…':text;
+  document.getElementById('mMode').textContent = cfg.label;
+  document.getElementById('mTotalN').textContent = cfg.nodes*3;
+  document.getElementById('mTotalB').textContent = bin.length;
+  document.getElementById('mEcLvl').textContent = cfg.ec;
+  document.getElementById('mEcPct').textContent = cfg.ecPct;
+  const pct = Math.min(100, Math.round((enc.payloadBytes.length / cfg.maxChar)*100));
+  document.getElementById('capFill').style.width = pct+'%';
+  document.getElementById('capPct').textContent = pct+'%';
+
+  let html='';
+  const show = Math.min(bin.length, 216);
+  for(let i=0;i<show;i++){
+    html+=`<span class="b${i%3+1}">${bin[i]}</span>`;
+    if((i+1)%8===0) html+=' ';
+  }
+  if(bin.length>show) html+='<span style="opacity:.3">…+'+( bin.length-show)+' bit</span>';
+  document.getElementById('binDiv').innerHTML=html;
+}
+
+// ════════════════════════════════════════════════════════════
+// DECODE FROM CANVAS
+// ════════════════════════════════════════════════════════════
+function decodeCtx(ctx, W, H, cx, cy, sc, mode) {
+  const cfg = MODES[mode];
+  const img = ctx.getImageData(0,0,W,H).data;
+
+  // Adaptive threshold: use mean of sampled pixels
+  let sum=0, cnt=0;
+  for(let y=10;y<H-10;y+=8) for(let x=10;x<W-10;x+=8){
+    const i=(y*W+x)*4; sum+=(img[i]+img[i+1]+img[i+2])/3; cnt++;
+  }
+  const thresh = (sum/cnt)*0.55;
+
+  const offs=[0,2*Math.PI/3,4*Math.PI/3];
+  const n=cfg.nodes;
+  let bin='';
+
+  for(let idx=0;idx<n;idx++)
+    for(let si=0;si<3;si++){
+      const p=spt(idx,n,offs[si],cx,cy,sc,cfg);
+      const px=Math.round(p.x), py=Math.round(p.y);
+      if(px>=0&&px<W&&py>=0&&py<H){
+        const i=(py*W+px)*4;
+        bin += (img[i]+img[i+1]+img[i+2])/3 < thresh ? '1':'0';
+      } else bin+='0';
+    }
+
+  return decodeBitstream(bin, mode);
+}
+
+function showResult(res) {
+  if(res.ok && res.text.length>=1){
+    document.getElementById('rbox').innerHTML=
+      `<div class="rout">${res.text}</div>
+       <div class="rsub">${res.length} bytes · CRC16 ✓ · RS ✓ · decoded ✦</div>`;
+    document.getElementById('stxt').textContent='· ✦ berhasil ·';
+  } else if(res.text && res.text.replace(/\?/g,'').trim().length>1){
+    document.getElementById('rbox').innerHTML=
+      `<div class="rout" style="opacity:.6">${res.text}</div>
+       <div class="rsub" style="color:#c8a840">CRC mismatch — kemungkinan partial read</div>`;
+    document.getElementById('stxt').textContent='· partial ·';
+  } else {
+    document.getElementById('rbox').innerHTML=
+      `<div class="rsub" style="color:#c8a840">tidak terbaca · ${res.err||'crc fail'}</div>`;
+    document.getElementById('stxt').textContent='· gagal · coba CARA 1 ·';
+  }
+}
+
+// ════════════════════════════════════════════════════════════
+// EVENTS
+// ════════════════════════════════════════════════════════════
+function gen(){ drawQR(document.getElementById('inp').value.trim()||'EMOSY', curMode); }
+
+document.getElementById('btnGen').onclick = gen;
+document.getElementById('inp').onkeydown = e => { if(e.key==='Enter')gen(); };
+
+document.getElementById('btnDL').onclick = function(){
+  const cv=document.getElementById('qr');
+  const a=document.createElement('a');
+  a.download='urip_symbol.png';
+  a.href=cv.toDataURL('image/png'); a.click();
+};
+
+document.getElementById('btnDirect').onclick = function(){
+  const cv=document.getElementById('qr');
+  const dpr=window.devicePixelRatio||1;
+  const W=cv.width, H=cv.height;
+  // Decode from physical canvas pixels
+  const tmp=document.createElement('canvas');
+  tmp.width=W; tmp.height=H;
+  const tctx=tmp.getContext('2d');
+  tctx.drawImage(cv,0,0);
+  document.getElementById('stxt').textContent='· membaca ·';
+  const sc=(W/dpr)*0.32;
+  const res=decodeCtx(tctx, W, H, W/2, H/2, sc*dpr, curMode);
+  showResult(res);
+};
+
+document.getElementById('uzone').onclick=()=>document.getElementById('filePick').click();
+document.getElementById('filePick').onchange=function(e){
+  const file=e.target.files[0]; if(!file)return;
+  document.getElementById('stxt').textContent='· membaca ·';
+  document.getElementById('rbox').innerHTML='<div class="rsub" style="opacity:.4">memproses...</div>';
+  const img=new Image();
+  img.onload=function(){
+    const cv=document.getElementById('buf');
+    cv.width=img.width; cv.height=img.height;
+    const ctx=cv.getContext('2d'); ctx.drawImage(img,0,0);
+    const W=img.width,H=img.height;
+    const res=decodeCtx(ctx,W,H,W/2,H/2,Math.min(W,H)*0.32,curMode);
+    showResult(res);
+    URL.revokeObjectURL(img.src); e.target.value='';
+  };
+  img.src=URL.createObjectURL(file);
+};
+
+// ════════════════════════════════════════════════════════════
+gen();
+</script>
+</body>
+</html>

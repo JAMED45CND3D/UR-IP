@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>✦ UR-IP · Stat (powered by URIP)</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#04040a;color:#ffe898;font-family:'Courier New',monospace;min-height:100vh;padding-bottom:60px}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(200,168,64,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(200,168,64,.018) 1px,transparent 1px);background-size:48px 48px;pointer-events:none}
+header{text-align:center;padding:20px 16px 12px;border-bottom:1px solid #c8a84022;position:relative;z-index:1}
+header h1{font-size:15px;letter-spacing:5px;color:#c8a840}
+header p{font-size:8px;letter-spacing:3px;opacity:.3;margin-top:4px}
+.wrap{max-width:600px;margin:0 auto;padding:20px 16px;position:relative;z-index:1}
+.lbl{font-size:8px;letter-spacing:3px;opacity:.35;display:block;margin-bottom:6px;text-transform:uppercase}
+.card{background:#0c0800;border:1px solid #c8a84022;padding:16px;margin-bottom:8px}
+.card h3{color:#c8a840;font-size:8px;letter-spacing:3px;margin-bottom:12px;text-transform:uppercase}
+textarea{width:100%;background:#080600;border:1px solid #c8a84033;border-left:2px solid #6a5020;color:#ffe898;padding:12px;font-family:'Courier New',monospace;font-size:12px;outline:none;resize:vertical;min-height:140px;line-height:1.8}
+textarea:focus{border-color:#c8a840}
+textarea::placeholder{color:#c8a84044}
+.btn{background:#c8a840;color:#04040a;border:none;padding:12px;font-family:'Courier New',monospace;font-size:10px;letter-spacing:3px;cursor:pointer;font-weight:bold;width:100%;margin-bottom:4px;text-transform:uppercase}
+.btn:active{background:#ffe898}
+.btn.ghost{background:transparent;color:#c8a840;border:1px solid #c8a84044}
+.btn.ghost:active{background:#c8a84011}
+
+/* STATS GRID */
+.sgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;margin-bottom:8px}
+.sitem{background:#080600;border:1px solid #c8a84022;padding:8px 4px;text-align:center}
+.snum{font-size:16px;font-weight:bold;color:#c8a840;margin-bottom:2px}
+.slbl{font-size:7px;opacity:.4;letter-spacing:1px}
+.sheat{font-size:8px;margin-top:3px}
+
+/* BAR CHART */
+.bar-wrap{margin-bottom:6px}
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.bar-digit{font-size:10px;color:#c8a840;width:14px;text-align:right;flex-shrink:0}
+.bar-track{flex:1;height:14px;background:#080600;border:1px solid #c8a84011;position:relative}
+.bar-fill{height:100%;background:#c8a840;transition:width .5s ease;position:relative}
+.bar-fill.hot{background:#ff6847}
+.bar-fill.cold{background:#4747ff}
+.bar-val{font-size:8px;color:#ffe898;padding-left:6px;flex-shrink:0;width:48px}
+.bar-pct{font-size:7px;opacity:.4;padding-left:2px}
+
+/* POSITION ANALYSIS */
+.pos-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:3px}
+.pos-card{background:#080600;border:1px solid #c8a84022;padding:8px}
+.pos-title{font-size:7px;letter-spacing:2px;color:#c8a840;margin-bottom:6px;text-align:center}
+.pos-bar{display:flex;flex-direction:column;gap:2px}
+.pb-row{display:flex;align-items:center;gap:3px}
+.pb-d{font-size:8px;width:10px;color:#ffe89888}
+.pb-t{flex:1;height:6px;background:#0c0800}
+.pb-f{height:100%;background:#c8a840}
+
+/* SYKLUS SCORE */
+.score-box{background:#080600;border:1px solid #c8a840;padding:20px;text-align:center;margin-bottom:8px}
+.score-val{font-size:48px;font-weight:bold;color:#c8a840;font-family:'Courier New',monospace}
+.score-lbl{font-size:8px;letter-spacing:3px;opacity:.4;margin-top:4px}
+.score-formula{font-size:9px;color:#c8a840;margin-top:8px;opacity:.6}
+
+/* INSIGHT */
+.insight{background:#080600;border-left:2px solid #c8a840;padding:12px;margin-bottom:6px;font-size:10px;line-height:1.9}
+.insight.warn{border-left-color:#ff6847}
+.insight.ok{border-left-color:#47ff8a}
+.ik{color:#c8a840}
+.iok{color:#47ff8a}
+.iwarn{color:#ff6847}
+
+/* PATTERN */
+.pattern-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.pat-item{background:#080600;border:1px solid #c8a84022;padding:10px;font-size:9px;line-height:1.8}
+.pat-label{color:#c8a840;font-size:8px;letter-spacing:2px;margin-bottom:4px}
+
+/* RANDOM TEST */
+.rtest{display:grid;grid-template-columns:1fr 1fr 1fr;gap:3px;margin-top:8px}
+.rt-item{background:#080600;border:1px solid #c8a84022;padding:8px;text-align:center}
+.rt-val{font-size:13px;font-weight:bold;margin-bottom:2px}
+.rt-lbl{font-size:7px;opacity:.4;letter-spacing:1px}
+.rt-ok{color:#47ff8a}
+.rt-warn{color:#ffbb47}
+.rt-err{color:#ff6847}
+
+.data-count{font-size:9px;color:#c8a840;text-align:center;padding:8px;opacity:.6}
+
+/* FORWARD TESTING */
+.ft-prediction{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;margin-bottom:10px}
+.ft-digit{background:#080600;border:1px solid #c8a84044;padding:10px 4px;text-align:center;cursor:pointer;transition:all .2s}
+.ft-digit:active{background:#c8a84022}
+.ft-digit .fd-num{font-size:22px;font-weight:bold;color:#c8a840}
+.ft-digit .fd-pct{font-size:8px;opacity:.4;margin-top:2px}
+.ft-digit.selected{border-color:#c8a840;background:#c8a84011}
+.ft-digit.selected .fd-num{color:#ffe898}
+.ft-result-row{display:flex;gap:4px;align-items:center;padding:8px;background:#080600;border:1px solid #c8a84011;margin-bottom:3px;font-size:10px}
+.fr-period{color:#c8a840;width:50px;flex-shrink:0;font-size:8px}
+.fr-actual{font-size:14px;font-weight:bold;letter-spacing:3px;flex:1}
+.fr-hits{text-align:right;font-size:9px}
+.fr-hit{color:#47ff8a}
+.fr-miss{color:#ff476a;opacity:.5}
+.fr-digit{display:inline-block;width:18px;text-align:center;font-size:12px;font-weight:bold}
+.fr-digit.hit{color:#47ff8a;text-shadow:0 0 8px #47ff8a44}
+.fr-digit.miss{opacity:.3}
+.score-track{display:grid;grid-template-columns:repeat(4,1fr);gap:3px;margin-bottom:10px}
+.st-item{background:#080600;border:1px solid #c8a84022;padding:10px;text-align:center}
+.st-val{font-size:18px;font-weight:bold;color:#c8a840}
+.st-lbl{font-size:7px;opacity:.4;letter-spacing:1px;margin-top:2px}
+.st-val.ok{color:#47ff8a}
+.st-val.warn{color:#ffbb47}
+.st-val.err{color:#ff476a}
+.predict-area{background:#080600;border:1px solid #c8a840;padding:14px;margin-bottom:10px}
+.pa-label{font-size:8px;letter-spacing:3px;color:#c8a840;margin-bottom:8px}
+.pa-digits{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.pa-d{font-size:28px;font-weight:bold;color:#c8a840;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border:1px solid #c8a84044}
+.input-row{display:flex;gap:6px;margin-bottom:8px}
+.inp-sm{flex:1;background:#040404;border:1px solid #c8a84033;border-left:2px solid #6a5020;color:#ffe898;padding:10px;font-family:'Courier New',monospace;font-size:14px;outline:none;letter-spacing:3px}
+.inp-sm:focus{border-color:#c8a840}
+.ibtn-sm{background:#c8a840;color:#04040a;border:none;padding:10px 14px;font-family:'Courier New',monospace;font-size:10px;letter-spacing:2px;cursor:pointer;font-weight:bold;white-space:nowrap}
+.ibtn-sm:active{background:#ffe898}
+.verdict{text-align:center;padding:16px;font-size:11px;line-height:2;margin-top:8px}
+.v-big{font-size:32px;font-weight:bold;display:block;margin-bottom:4px}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>✦ UR-IP · STAT</h1>
+  <p>statistical pattern analyzer · 5D data</p>
+</header>
+
+<div class="tabs" style="display:flex;justify-content:center;border-bottom:1px solid #c8a84022;margin-bottom:0">
+  <button id="tab-stat" onclick="switchTab('stat')" style="padding:10px 14px;font-size:9px;letter-spacing:3px;cursor:pointer;opacity:1;border:none;border-bottom:2px solid #c8a840;background:none;color:#c8a840;font-family:'Courier New',monospace">ANALISIS</button>
+  <button id="tab-ft" onclick="switchTab('ft')" style="padding:10px 14px;font-size:9px;letter-spacing:3px;cursor:pointer;opacity:.3;border:none;border-bottom:2px solid transparent;background:none;color:#ffe898;font-family:'Courier New',monospace">FORWARD TEST</button>
+</div>
+<div class="wrap" id="page-stat">
+
+  <!-- INPUT -->
+  <div class="card">
+    <h3>Input Data</h3>
+    <span class="lbl">Paste nomor (satu per baris, atau spasi/koma)</span>
+    <textarea id="data-input" placeholder="34720&#10;88590&#10;53572&#10;97186&#10;56160&#10;30287&#10;05007&#10;89729&#10;32429&#10;10937"></textarea>
+    <br><br>
+    <button class="btn" onclick="analyze()">✦ ANALYZE</button>
+    <button class="btn ghost" onclick="loadSample()">◈ Load Data Contoh</button>
+  </div>
+
+  <!-- OUTPUT (hidden until analyzed) -->
+  <div id="output" style="display:none">
+
+    <div class="data-count" id="data-count"></div>
+
+    <!-- SYKLUS SCORE -->
+    <div class="card">
+      <h3>SYKLUS Randomness Score</h3>
+      <div class="score-box">
+        <div class="score-val" id="s-score">0.00</div>
+        <div class="score-lbl">S = O × I × |C(ρ) − P_dom|</div>
+        <div class="score-formula" id="s-formula">—</div>
+      </div>
+      <div class="insight" id="s-insight"></div>
+    </div>
+
+    <!-- DIGIT FREQUENCY -->
+    <div class="card">
+      <h3>Frekuensi Digit (0–9)</h3>
+      <div class="bar-wrap" id="freq-bars"></div>
+      <div class="rtest" id="freq-tests"></div>
+    </div>
+
+    <!-- PER POSISI -->
+    <div class="card">
+      <h3>Distribusi Per Posisi (D1–D5)</h3>
+      <div class="pos-grid" id="pos-grid"></div>
+    </div>
+
+    <!-- HOT COLD -->
+    <div class="card">
+      <h3>Hot &amp; Cold Digits</h3>
+      <div class="pattern-grid" id="hot-cold"></div>
+    </div>
+
+    <!-- GAP ANALYSIS -->
+    <div class="card">
+      <h3>Gap Analysis — Jarak Antar Kemunculan</h3>
+      <div id="gap-analysis"></div>
+    </div>
+
+    <!-- REPEAT PATTERN -->
+    <div class="card">
+      <h3>Temuan Pola</h3>
+      <div id="findings"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const SAMPLE = [34720,88590,53572,97186,56160,30287,5007,89729,32429,10937];
+
+function loadSample() {
+  document.getElementById('data-input').value = SAMPLE.join('\n');
+  analyze();
+}
+
+function parseInput() {
+  const raw = document.getElementById('data-input').value;
+  const nums = raw.split(/[\n,;\s]+/)
+    .map(s => s.trim().replace(/\D/g,''))
+    .filter(s => s.length >= 4 && s.length <= 6)
+    .map(s => s.padStart(5,'0'));
+  return [...new Set(nums)]; // deduplicate
+}
+
+function analyze() {
+  const data = parseInput();
+  if (data.length < 3) {
+    alert('Minimal 3 nomor untuk dianalisis!');
+    return;
+  }
+
+  document.getElementById('output').style.display = 'block';
+  document.getElementById('data-count').textContent = `${data.length} nomor dianalisis`;
+
+  // Extract all digits
+  const allDigits = data.flatMap(n => [...n].map(Number));
+  const byPos = [0,1,2,3,4].map(p => data.map(n => parseInt(n[p])));
+
+  // ── DIGIT FREQUENCY ──
+  const freq = new Array(10).fill(0);
+  allDigits.forEach(d => freq[d]++);
+  const total = allDigits.length;
+  const expected = total / 10;
+  const maxFreq = Math.max(...freq);
+  const minFreq = Math.min(...freq);
+
+  // Chi-square test for uniformity
+  const chiSq = freq.reduce((sum, f) => sum + Math.pow(f - expected, 2) / expected, 0);
+  // Critical value χ²(9, 0.05) = 16.92
+  const isUniform = chiSq < 16.92;
+
+  // Render bars
+  const sortedFreq = freq.map((f,d) => ({d,f})).sort((a,b) => b.f - a.f);
+  let barsHtml = '';
+  freq.forEach((f, d) => {
+    const pct = (f/maxFreq)*100;
+    const isHot = f === maxFreq;
+    const isCold = f === minFreq;
+    const cls = isHot ? 'hot' : isCold ? 'cold' : '';
+    const indicator = isHot ? '🔥' : isCold ? '❄️' : '';
+    barsHtml += `
+      <div class="bar-row">
+        <div class="bar-digit">${d}</div>
+        <div class="bar-track">
+          <div class="bar-fill ${cls}" style="width:${pct}%"></div>
+        </div>
+        <div class="bar-val">${f}× ${indicator}</div>
+        <div class="bar-pct">${((f/total)*100).toFixed(1)}%</div>
+      </div>`;
+  });
+  document.getElementById('freq-bars').innerHTML = barsHtml;
+
+  // Frequency tests
+  const variance = freq.reduce((s,f) => s + Math.pow(f-expected,2), 0) / 10;
+  const stdDev = Math.sqrt(variance);
+  const cv = stdDev / expected * 100; // coefficient of variation
+
+  document.getElementById('freq-tests').innerHTML = `
+    <div class="rt-item">
+      <div class="rt-val ${chiSq<16.92?'rt-ok':'rt-warn'}">${chiSq.toFixed(1)}</div>
+      <div class="rt-lbl">χ² score</div>
+    </div>
+    <div class="rt-item">
+      <div class="rt-val ${isUniform?'rt-ok':'rt-warn'}">${isUniform?'UNIFORM':'SKEWED'}</div>
+      <div class="rt-lbl">distribusi</div>
+    </div>
+    <div class="rt-item">
+      <div class="rt-val ${cv<25?'rt-ok':cv<40?'rt-warn':'rt-err'}">${cv.toFixed(1)}%</div>
+      <div class="rt-lbl">variasi (CV)</div>
+    </div>`;
+
+  // ── PER POSISI ──
+  let posHtml = '';
+  ['D1','D2','D3','D4','D5'].forEach((label, p) => {
+    const posDigits = byPos[p];
+    const posFreq = new Array(10).fill(0);
+    posDigits.forEach(d => posFreq[d]++);
+    const posMax = Math.max(...posFreq);
+    const dominant = posFreq.indexOf(posMax);
+    let pbHtml = '';
+    for (let d=0; d<10; d++) {
+      const w = posMax > 0 ? (posFreq[d]/posMax)*100 : 0;
+      pbHtml += `<div class="pb-row"><div class="pb-d">${d}</div><div class="pb-t"><div class="pb-f" style="width:${w}%"></div></div></div>`;
+    }
+    posHtml += `<div class="pos-card"><div class="pos-title">${label}<br><span style="color:#ffe89888">${dominant}×${posMax}</span></div><div class="pos-bar">${pbHtml}</div></div>`;
+  });
+  document.getElementById('pos-grid').innerHTML = posHtml;
+
+  // ── HOT COLD ──
+  const sorted = [...freq.map((f,d) => ({d,f}))].sort((a,b) => b.f-a.f);
+  const hot3 = sorted.slice(0,3).map(x=>x.d);
+  const cold3 = sorted.slice(-3).map(x=>x.d);
+  document.getElementById('hot-cold').innerHTML = `
+    <div class="pat-item">
+      <div class="pat-label">🔥 HOT DIGITS (paling sering)</div>
+      ${hot3.map(d => `<span style="color:#ff6847;font-size:16px;font-weight:bold;margin-right:12px">${d}</span><span style="font-size:9px;opacity:.5">(${freq[d]}×)</span> `).join('<br>')}
+      <br><br><span style="font-size:8px;opacity:.4">Muncul lebih sering dari rata-rata</span>
+    </div>
+    <div class="pat-item">
+      <div class="pat-label">❄️ COLD DIGITS (paling jarang)</div>
+      ${cold3.map(d => `<span style="color:#4747ff;font-size:16px;font-weight:bold;margin-right:12px">${d}</span><span style="font-size:9px;opacity:.5">(${freq[d]}×)</span> `).join('<br>')}
+      <br><br><span style="font-size:8px;opacity:.4">Muncul lebih jarang dari rata-rata</span>
+    </div>`;
+
+  // ── GAP ANALYSIS ──
+  // For each digit, find gaps between appearances
+  let gapHtml = '';
+  [0,1,2,3,4,5,6,7,8,9].forEach(d => {
+    const positions = [];
+    data.forEach((n, i) => { if ([...n].map(Number).includes(d)) positions.push(i); });
+    if (positions.length < 2) return;
+    const gaps = [];
+    for (let i=1; i<positions.length; i++) gaps.push(positions[i]-positions[i-1]);
+    const avgGap = gaps.reduce((a,b)=>a+b,0)/gaps.length;
+    const maxGap = Math.max(...gaps);
+    const lastSeen = positions[positions.length-1];
+    const currentGap = data.length - 1 - lastSeen;
+    const overdue = currentGap > avgGap * 1.5;
+    gapHtml += `<div class="insight ${overdue?'warn':''}">
+      <span class="ik">Digit ${d}</span> — muncul ${positions.length}× · gap rata-rata: ${avgGap.toFixed(1)} · terakhir: periode ke-${lastSeen+1} dari belakang · 
+      <span class="${overdue?'iwarn':'iok'}">${overdue?'⚠ OVERDUE — belum muncul lama':'✓ normal'}</span>
+    </div>`;
+  });
+  document.getElementById('gap-analysis').innerHTML = gapHtml || '<div class="insight">Data terlalu sedikit untuk gap analysis</div>';
+
+  // ── SYKLUS SCORE ──
+  // O = seberapa merata distribusi (1 = sempurna merata)
+  const O = Math.max(0, 1 - (cv/100));
+
+  // I = kedalaman informasi = jumlah data / ideal (50+ = I=1)
+  const I = Math.min(1, data.length / 50);
+
+  // C = koherensi pola = 1 - (chiSq / 100), capped
+  const C = Math.max(0, Math.min(1, 1 - chiSq/100));
+
+  // P_dom = 0.5 (titik acak sempurna)
+  const P_dom = 0.5;
+  const coherenceGap = Math.abs(C - P_dom);
+
+  const S = O * I * coherenceGap;
+
+  document.getElementById('s-score').textContent = S.toFixed(4);
+  document.getElementById('s-formula').textContent =
+    `O=${O.toFixed(2)} × I=${I.toFixed(2)} × |C(${C.toFixed(2)})−P(${P_dom})| = ${S.toFixed(4)}`;
+
+  // Interpret score
+  let insightHtml = '';
+  if (S < 0.02) {
+    insightHtml = `<span class="iok">✓ S sangat rendah (${S.toFixed(4)}) — data menunjukkan distribusi yang sangat mendekati random sempurna. Tidak ada pola signifikan yang bisa dieksploitasi.</span>`;
+  } else if (S < 0.06) {
+    insightHtml = `<span class="iwarn">◈ S moderat (${S.toFixed(4)}) — ada sedikit ketidakmerataan distribusi. Dengan data lebih banyak, pola ini bisa menguat atau menghilang.</span>`;
+  } else {
+    insightHtml = `<span class="iwarn">⚠ S cukup tinggi (${S.toFixed(4)}) — distribusi tidak merata cukup signifikan. Kemungkinan: data masih sedikit, atau ada bias sistemik.</span>`;
+  }
+  document.getElementById('s-insight').innerHTML = insightHtml;
+
+  // ── FINDINGS ──
+  const findings = [];
+
+  // Consecutive digits
+  let consecutive = 0;
+  for (let i=1; i<data.length; i++) {
+    const prev = parseInt(data[i-1]), curr = parseInt(data[i]);
+    if (Math.abs(curr-prev) < 1000) consecutive++;
+  }
+  if (consecutive > data.length * 0.3) findings.push({type:'warn', text:`${consecutive} dari ${data.length-1} pasang nomor berurutan mirip secara numerik — anomali ringan`});
+
+  // Sum pattern
+  const sums = data.map(n => [...n].map(Number).reduce((a,b)=>a+b,0));
+  const avgSum = sums.reduce((a,b)=>a+b,0)/sums.length;
+  const sumVariance = Math.sqrt(sums.reduce((s,v)=>s+Math.pow(v-avgSum,2),0)/sums.length);
+  findings.push({type:'ok', text:`Rata-rata jumlah digit: ${avgSum.toFixed(1)} (teoritis: 22.5) · deviasi: ${sumVariance.toFixed(1)}`});
+
+  // Even/odd ratio
+  const evenCount = allDigits.filter(d=>d%2===0).length;
+  const oddCount = total - evenCount;
+  const evenPct = (evenCount/total*100).toFixed(1);
+  const isEvenOddOk = Math.abs(evenCount-oddCount) < total*0.15;
+  findings.push({type:isEvenOddOk?'ok':'warn', text:`Genap: ${evenCount} (${evenPct}%) · Ganjil: ${oddCount} (${(100-parseFloat(evenPct)).toFixed(1)}%) · ${isEvenOddOk?'✓ seimbang':'⚠ tidak seimbang'}`});
+
+  // High/low ratio (0-4 vs 5-9)
+  const lowCount = allDigits.filter(d=>d<5).length;
+  const highCount = total - lowCount;
+  const isHiLoOk = Math.abs(lowCount-highCount) < total*0.15;
+  findings.push({type:isHiLoOk?'ok':'warn', text:`Rendah (0-4): ${lowCount} · Tinggi (5-9): ${highCount} · ${isHiLoOk?'✓ seimbang':'⚠ condong ke '+(lowCount>highCount?'rendah':'tinggi')}`});
+
+  // Conclusion
+  findings.push({type:'ok', text:`Kesimpulan: Dengan ${data.length} data, χ²=${chiSq.toFixed(1)} — ${isUniform?'distribusi seragam, mendukung hipotesis random':'distribusi tidak seragam, butuh lebih banyak data untuk konfirmasi'}`});
+
+  document.getElementById('findings').innerHTML = findings.map(f =>
+    `<div class="insight ${f.type==='warn'?'warn':f.type==='ok'?'ok':''}">${f.text}</div>`
+  ).join('');
+}
+
+// Auto-load sample
+loadSample();
+</script>
+</div><!-- end page-stat -->
+
+<div id="page-ft" style="display:none;max-width:600px;margin:0 auto;padding:20px 16px;position:relative;z-index:1">
+
+  <!-- PREDICTION PANEL -->
+  <div class="card">
+    <h3>Prediksi Aktif</h3>
+    <div class="predict-area" id="ft-predict-box">
+      <div class="pa-label">DIGIT PREDIKSI (dari analisis)</div>
+      <div class="pa-digits" id="ft-pred-digits">
+        <div style="font-size:9px;opacity:.4">Jalankan Analisis dulu di tab Analisis</div>
+      </div>
+      <div style="font-size:8px;opacity:.4;line-height:1.8" id="ft-pred-meta">—</div>
+    </div>
+
+    <span class="lbl">Input Hasil Aktual (5 digit)</span>
+    <div class="input-row">
+      <input class="inp-sm" id="ft-actual" maxlength="5" placeholder="34720" type="tel">
+      <input class="inp-sm" id="ft-period" maxlength="6" placeholder="3189" type="tel" style="max-width:90px">
+      <button class="ibtn-sm" onclick="addResult()">✦ ADD</button>
+    </div>
+    <div style="font-size:8px;opacity:.3;letter-spacing:1px">nomor hasil · periode · tambah ke tracker</div>
+  </div>
+
+  <!-- SCORECARD -->
+  <div class="card">
+    <h3>Scorecard</h3>
+    <div class="score-track">
+      <div class="st-item"><div class="st-val" id="ft-total">0</div><div class="st-lbl">total tes</div></div>
+      <div class="st-item"><div class="st-val ok" id="ft-hits">0</div><div class="st-lbl">digit hit</div></div>
+      <div class="st-item"><div class="st-val" id="ft-acc">0%</div><div class="st-lbl">akurasi</div></div>
+      <div class="st-item"><div class="st-val" id="ft-exp">~10%</div><div class="st-lbl">expected</div></div>
+    </div>
+    <div class="verdict" id="ft-verdict" style="display:none"></div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="card">
+    <h3>Riwayat Test</h3>
+    <div id="ft-history"><div style="font-size:9px;opacity:.3;text-align:center;padding:20px">Belum ada hasil</div></div>
+  </div>
+
+  <button class="btn ghost" onclick="clearResults()" style="margin-top:4px">✕ Reset Tracker</button>
+</div>
+
+<script>
+// ── TAB SWITCH ──
+function switchTab(t) {
+  document.getElementById('page-stat').style.display = t==='stat' ? 'block' : 'none';
+  document.getElementById('page-ft').style.display = t==='ft' ? 'block' : 'none';
+  document.getElementById('tab-stat').style.opacity = t==='stat' ? '1' : '.3';
+  document.getElementById('tab-ft').style.opacity = t==='ft' ? '1' : '.3';
+  document.getElementById('tab-stat').style.borderBottomColor = t==='stat' ? '#c8a840' : 'transparent';
+  document.getElementById('tab-ft').style.borderBottomColor = t==='ft' ? '#c8a840' : 'transparent';
+  document.getElementById('tab-stat').style.color = t==='stat' ? '#c8a840' : '#ffe898';
+  document.getElementById('tab-ft').style.color = t==='ft' ? '#c8a840' : '#ffe898';
+}
+
+// ── FORWARD TEST STATE ──
+let ftPrediction = []; // array of predicted hot digits
+let ftResults = JSON.parse(localStorage.getItem('syklus_ft') || '[]');
+
+function setFTPrediction(hotDigits, meta) {
+  ftPrediction = hotDigits;
+  const box = document.getElementById('ft-pred-digits');
+  box.innerHTML = hotDigits.map(d =>
+    `<div class="pa-d">${d}</div>`
+  ).join('');
+  document.getElementById('ft-pred-meta').textContent = meta;
+  renderHistory();
+}
+
+function addResult() {
+  const actual = document.getElementById('ft-actual').value.trim().replace(/\D/g,'');
+  const period = document.getElementById('ft-period').value.trim() || ('auto-'+(ftResults.length+1));
+  if (actual.length < 4) { alert('Masukkan 4-5 digit hasil!'); return; }
+  if (ftPrediction.length === 0) { alert('Jalankan Analisis dulu!'); return; }
+
+  const digits = [...actual.padStart(5,'0')].map(Number);
+  const hits = digits.filter(d => ftPrediction.includes(d));
+  const hitCount = hits.length;
+  const hitPositions = digits.map((d,i) => ftPrediction.includes(d) ? i : -1).filter(x=>x>=0);
+
+  ftResults.unshift({ period, actual: actual.padStart(5,'0'), digits, hits: hitCount, hitPositions, prediction: [...ftPrediction], ts: Date.now() });
+  localStorage.setItem('syklus_ft', JSON.stringify(ftResults));
+
+  document.getElementById('ft-actual').value = '';
+  document.getElementById('ft-period').value = '';
+  renderHistory();
+  updateScore();
+}
+
+function renderHistory() {
+  const el = document.getElementById('ft-history');
+  if (ftResults.length === 0) {
+    el.innerHTML = '<div style="font-size:9px;opacity:.3;text-align:center;padding:20px">Belum ada hasil</div>';
+    return;
+  }
+  el.innerHTML = ftResults.slice(0,20).map(r => {
+    const digs = [...r.actual].map((d,i) => {
+      const hit = r.prediction.includes(parseInt(d));
+      return `<span class="fr-digit ${hit?'hit':'miss'}">${d}</span>`;
+    }).join('');
+    const hitClass = r.hits >= 3 ? 'fr-hit' : r.hits >= 1 ? '' : 'fr-miss';
+    return `<div class="ft-result-row">
+      <div class="fr-period">#${r.period}</div>
+      <div class="fr-actual">${digs}</div>
+      <div class="fr-hits"><span class="${hitClass}">${r.hits}/5 hit</span><br>
+      <span style="font-size:7px;opacity:.3">pred: [${r.prediction.join(',')}]</span></div>
+    </div>`;
+  }).join('');
+}
+
+function updateScore() {
+  const total = ftResults.length;
+  const totalDigits = total * 5;
+  const totalHits = ftResults.reduce((s,r) => s+r.hits, 0);
+  const acc = totalDigits > 0 ? (totalHits/totalDigits*100) : 0;
+  // Expected: if predicting N digits out of 10, expect N/10 * 5 hits per number
+  const predSize = ftPrediction.length || 3;
+  const expectedAcc = (predSize/10)*100;
+
+  document.getElementById('ft-total').textContent = total;
+  document.getElementById('ft-hits').textContent = totalHits;
+  document.getElementById('ft-acc').textContent = acc.toFixed(1)+'%';
+  document.getElementById('ft-exp').textContent = '~'+expectedAcc.toFixed(0)+'%';
+
+  const accEl = document.getElementById('ft-acc');
+  if (acc > expectedAcc * 1.5) accEl.className = 'st-val ok';
+  else if (acc < expectedAcc * 0.5) accEl.className = 'st-val err';
+  else accEl.className = 'st-val warn';
+
+  // Verdict
+  if (total >= 10) {
+    const verdict = document.getElementById('ft-verdict');
+    verdict.style.display = 'block';
+    const edge = acc - expectedAcc;
+    if (edge > 15) {
+      verdict.innerHTML = `<span class="v-big" style="color:#47ff8a">+${edge.toFixed(1)}%</span>Ada edge signifikan di atas random!<br><span style="font-size:9px;opacity:.4">Teruskan test — butuh 50+ untuk konfirmasi</span>`;
+    } else if (edge > 5) {
+      verdict.innerHTML = `<span class="v-big" style="color:#ffbb47">+${edge.toFixed(1)}%</span>Sedikit di atas random<br><span style="font-size:9px;opacity:.4">Belum bisa disimpulkan — lanjutkan test</span>`;
+    } else if (edge < -5) {
+      verdict.innerHTML = `<span class="v-big" style="color:#ff476a">${edge.toFixed(1)}%</span>Di bawah random — pola tidak terbukti<br><span style="font-size:9px;opacity:.4">Atau coba ganti prediksi dengan cold digits</span>`;
+    } else {
+      verdict.innerHTML = `<span class="v-big" style="color:#c8a840">${edge.toFixed(1)}%</span>Setara random — tidak ada pola terdeteksi<br><span style="font-size:9px;opacity:.4">Hasil ini mendukung hipotesis random</span>`;
+    }
+  }
+}
+
+function clearResults() {
+  if (!confirm('Reset semua data forward test?')) return;
+  ftResults = [];
+  localStorage.removeItem('syklus_ft');
+  renderHistory();
+  updateScore();
+}
+
+// Hook analyze() to also update FT prediction
+const _origAnalyze = typeof analyze !== 'undefined' ? analyze : null;
+window.addEventListener('load', () => {
+  const origAnalyze = window.analyze;
+  window.analyze = function() {
+    origAnalyze();
+    // After analysis, pull hot digits and set as prediction
+    setTimeout(() => {
+      // Read hot digits from the hot-cold panel
+      const hotColdEl = document.getElementById('hot-cold');
+      if (!hotColdEl) return;
+      const spans = hotColdEl.querySelectorAll('span[style*="ff6847"]');
+      const hotDigits = [...spans].map(s => parseInt(s.textContent)).filter(d => !isNaN(d));
+      if (hotDigits.length > 0) {
+        setFTPrediction(hotDigits, `Hot digits dari analisis · tap tab Forward Test`);
+      }
+    }, 100);
+  };
+  renderHistory();
+  updateScore();
+});
+</script>
+</body>
+</html>

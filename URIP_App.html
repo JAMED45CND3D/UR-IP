@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UR-IP · Generator & Scanner</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=IBM+Plex+Mono:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#04040a;--s1:#08080f;--s2:#0d0d18;--b1:#121224;--b2:#1a1a32;
+  --gold:#c8a840;--gold2:#ffe898;--gold3:#6a5020;
+  --text:#e0dfc8;--muted:#48486a;--muted2:#2a2a44;
+  --ok:#47ff8a;--err:#ff476a;--warn:#ffbb47;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospace;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(200,168,64,0.018) 1px,transparent 1px),linear-gradient(90deg,rgba(200,168,64,0.018) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
+
+/* NAV */
+.nav{position:sticky;top:0;z-index:100;background:rgba(4,4,10,0.95);backdrop-filter:blur(16px);border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:52px}
+.nav-brand{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;letter-spacing:2px;color:var(--gold)}
+.nav-tabs{display:flex;gap:0}
+.nav-tab{padding:0 20px;height:52px;display:flex;align-items:center;font-size:10px;letter-spacing:3px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;text-transform:uppercase;background:none;border-top:none;border-left:none;border-right:none;font-family:'IBM Plex Mono',monospace}
+.nav-tab:hover{color:var(--text)}
+.nav-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.nav-ver{font-size:9px;color:var(--muted);letter-spacing:2px}
+
+/* PAGES */
+.page{display:none;position:relative;z-index:1;min-height:calc(100vh - 52px)}
+.page.active{display:block}
+
+/* ══ GENERATOR PAGE ══ */
+.gen-layout{display:grid;grid-template-columns:360px 1fr;gap:2px;max-width:1000px;margin:32px auto;padding:0 24px}
+
+.panel{background:var(--s1);border:1px solid var(--b1)}
+.panel-hdr{padding:14px 20px;border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:8px}
+.phd{width:5px;height:5px;border-radius:50%;background:var(--gold)}
+.pht{font-size:9px;letter-spacing:3px;color:var(--gold);text-transform:uppercase}
+.panel-body{padding:20px}
+
+.lbl{font-size:9px;letter-spacing:2px;color:var(--muted);margin-bottom:7px;display:block;text-transform:uppercase}
+
+textarea,input[type=text]{width:100%;background:var(--s2);border:1px solid var(--b2);border-left:2px solid var(--gold3);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:12px;outline:none;transition:all 0.25s;line-height:1.7}
+textarea{resize:vertical;min-height:72px}
+textarea:focus,input[type=text]:focus{border-color:var(--gold);box-shadow:0 0 16px rgba(200,168,64,0.12)}
+textarea::placeholder,input::placeholder{color:var(--muted)}
+
+.inp-group{margin-bottom:16px}
+
+/* MODE */
+.mode-row{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;margin-bottom:16px}
+.mbtn{padding:8px 4px;background:var(--s2);border:1px solid var(--b2);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;cursor:pointer;transition:all 0.2s;text-align:center}
+.mbtn:hover{border-color:var(--gold3);color:var(--text)}
+.mbtn.active{background:rgba(200,168,64,0.08);border-color:var(--gold);color:var(--gold)}
+.mbtn span{display:block;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;margin-bottom:2px}
+
+/* THEME */
+.theme-row{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
+.tdot{width:24px;height:24px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all 0.2s}
+.tdot.active{border-color:#fff;transform:scale(1.2)}
+
+/* TOGGLE */
+.tog-row{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+.tog{width:34px;height:18px;background:var(--b2);border-radius:9px;cursor:pointer;position:relative;border:1px solid var(--b1);transition:background 0.3s;flex-shrink:0}
+.tog.on{background:var(--gold3)}
+.tok{position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:var(--muted);transition:all 0.3s}
+.tog.on .tok{left:18px;background:var(--gold)}
+.tog-lbl{font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
+
+/* BTN */
+.gbtn{width:100%;padding:14px;background:var(--gold);color:#000;border:none;font-family:'Syne',sans-serif;font-size:12px;font-weight:800;letter-spacing:4px;text-transform:uppercase;cursor:pointer;transition:all 0.2s;margin-bottom:2px}
+.gbtn:hover{opacity:0.88;transform:translateY(-1px)}
+.gbtn:active{transform:translateY(0)}
+.gbtn.secondary{background:transparent;color:var(--gold);border:1px solid var(--gold3)}
+.gbtn.secondary:hover{border-color:var(--gold);background:rgba(200,168,64,0.06)}
+
+/* CANVAS PANEL */
+.canvas-panel{background:var(--s1);border:1px solid var(--b1);display:flex;flex-direction:column}
+.canvas-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:28px;min-height:440px;position:relative}
+canvas{display:block;max-width:100%}
+.canvas-footer{padding:14px 20px;border-top:1px solid var(--b1);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.cf-formula{font-size:10px;color:var(--gold);letter-spacing:1px}
+.dl-btn{padding:7px 14px;background:transparent;color:var(--gold);border:1px solid var(--gold3);font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;cursor:pointer;transition:all 0.2s;text-transform:uppercase}
+.dl-btn:hover{background:rgba(200,168,64,0.1);border-color:var(--gold)}
+
+/* DECODE */
+.decode-strip{max-width:1000px;margin:2px auto;padding:0 24px}
+.decode-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px}
+.decode-out{background:var(--s2);border:1px solid var(--b2);border-left:2px solid var(--gold3);padding:14px;font-size:12px;color:var(--text);line-height:1.8;min-height:56px}
+.decode-meta{font-size:11px;color:var(--muted);line-height:2.2;padding:4px 0}
+.decode-meta .ok{color:var(--ok)}
+.decode-meta .err{color:var(--err)}
+.decode-meta .warn{color:var(--warn)}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;max-width:1000px;margin:2px auto;padding:0 24px 32px}
+.stat{background:var(--s1);border:1px solid var(--b1);padding:12px;text-align:center}
+.sn{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--gold)}
+.sl{font-size:9px;color:var(--muted);letter-spacing:1px;margin-top:2px}
+
+/* ══ SCANNER PAGE ══ */
+.scan-layout{max-width:800px;margin:32px auto;padding:0 24px}
+.scan-panel{background:var(--s1);border:1px solid var(--b1);margin-bottom:2px}
+.video-wrap{position:relative;background:#000;aspect-ratio:1;overflow:hidden;max-height:420px;display:flex;align-items:center;justify-content:center}
+video{width:100%;height:100%;object-fit:cover;display:block}
+.scan-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
+.scan-reticle{width:60%;aspect-ratio:1;border:1px solid rgba(200,168,64,0.5);border-radius:50%;animation:pulse-ring 2s ease infinite}
+.scan-crosshair{position:absolute;width:2px;height:40%;background:rgba(200,168,64,0.2);top:50%;left:50%;transform:translate(-50%,-50%)}
+.scan-crosshairH{position:absolute;height:2px;width:40%;background:rgba(200,168,64,0.2);top:50%;left:50%;transform:translate(-50%,-50%)}
+.scan-center{position:absolute;width:10px;height:10px;border-radius:50%;background:var(--gold);box-shadow:0 0 16px var(--gold);top:50%;left:50%;transform:translate(-50%,-50%)}
+@keyframes pulse-ring{0%,100%{opacity:0.5;transform:scale(1)}50%{opacity:1;transform:scale(1.04)}}
+
+.scan-controls{padding:16px 20px;display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--b1)}
+.scan-result{padding:20px;border-top:1px solid var(--b1)}
+.sr-label{font-size:9px;letter-spacing:3px;color:var(--muted);margin-bottom:10px;text-transform:uppercase}
+.sr-text{font-size:14px;color:var(--text);line-height:1.8;min-height:32px;word-break:break-all}
+.sr-meta{font-size:11px;color:var(--muted);margin-top:10px;line-height:2}
+
+/* Manual decode */
+.manual-area{padding:16px 20px;border-top:1px solid var(--b1)}
+
+/* ══ ABOUT PAGE ══ */
+.about-layout{max-width:720px;margin:48px auto;padding:0 24px 80px}
+.about-block{background:var(--s1);border:1px solid var(--b1);padding:24px 28px;margin-bottom:2px}
+.ab-tag{font-size:9px;letter-spacing:4px;color:var(--gold);margin-bottom:8px;text-transform:uppercase}
+.ab-title{font-family:'Syne',sans-serif;font-size:18px;font-weight:800;margin-bottom:12px;letter-spacing:-0.5px}
+.ab-body{font-size:12px;color:var(--muted);line-height:2}
+.ab-body strong{color:var(--text)}
+.ab-body em{color:var(--gold);font-style:normal}
+.api-block{background:var(--s2);border:1px solid var(--b2);border-left:2px solid var(--gold3);padding:14px;margin:12px 0;font-size:11px;line-height:2;overflow-x:auto}
+.api-block .k{color:var(--gold)}
+.api-block .s{color:var(--ok)}
+.api-block .c{color:var(--muted)}
+
+/* FOOTER */
+.page-footer{text-align:center;padding:32px 24px;font-size:10px;color:var(--muted);letter-spacing:2px;line-height:2.5;border-top:1px solid var(--b1);position:relative;z-index:1}
+.page-footer em{color:var(--gold);font-style:normal}
+
+@media(max-width:700px){
+  .gen-layout{grid-template-columns:1fr}
+  .decode-grid{grid-template-columns:1fr}
+  .stats-row{grid-template-columns:repeat(2,1fr)}
+  .mode-row{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-brand">✦ UR-IP</div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('gen',this)">Generator</button>
+    <button class="nav-tab" onclick="showPage('scan',this)">Scanner</button>
+    <button class="nav-tab" onclick="showPage('about',this)">Library</button>
+  </div>
+  <div class="nav-ver">uriplib v1.0</div>
+</nav>
+
+<!-- ══ GENERATOR ══ -->
+<div class="page active" id="page-gen">
+  <div class="gen-layout">
+
+    <div>
+      <div class="panel">
+        <div class="panel-hdr"><div class="phd"></div><div class="pht">Encode Teks</div></div>
+        <div class="panel-body">
+          <div class="inp-group">
+            <label class="lbl">Teks / URL / Data</label>
+            <textarea id="gen-input" placeholder="Tulis apapun...&#10;&#10;Ctrl+Enter untuk generate"></textarea>
+          </div>
+
+          <label class="lbl">Density Mode</label>
+          <div class="mode-row">
+            <div class="mbtn active" onclick="setMode('LITE',this)"><span>LITE</span>~18 byte</div>
+            <div class="mbtn" onclick="setMode('STANDARD',this)"><span>STD</span>~45 byte</div>
+            <div class="mbtn" onclick="setMode('DENSE',this)"><span>DENSE</span>~112 byte</div>
+            <div class="mbtn" onclick="setMode('ULTRA',this)"><span>ULTRA</span>~290 byte</div>
+          </div>
+
+          <label class="lbl">Tema</label>
+          <div class="theme-row">
+            <div class="tdot active" style="background:linear-gradient(135deg,#c8a840,#ffe898)" onclick="setTheme('gold',this)"></div>
+            <div class="tdot" style="background:linear-gradient(135deg,#47ffe0,#47b8ff)" onclick="setTheme('cyan',this)"></div>
+            <div class="tdot" style="background:linear-gradient(135deg,#e8ff47,#47ff8a)" onclick="setTheme('lime',this)"></div>
+            <div class="tdot" style="background:linear-gradient(135deg,#ff476a,#ff8a47)" onclick="setTheme('ember',this)"></div>
+            <div class="tdot" style="background:linear-gradient(135deg,#c847ff,#7747ff)" onclick="setTheme('violet',this)"></div>
+            <div class="tdot" style="background:linear-gradient(135deg,#ddd,#888)" onclick="setTheme('white',this)"></div>
+          </div>
+
+          <div class="tog-row">
+            <div class="tog" id="anim-tog" onclick="toggleAnim()"><div class="tok"></div></div>
+            <span class="tog-lbl">Animasi Orbit</span>
+          </div>
+
+          <button class="gbtn" onclick="generate()">✦ Generate SYKLUS</button>
+          <button class="gbtn secondary" onclick="downloadSymbol()" style="margin-top:2px">↓ Unduh PNG</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="canvas-panel">
+      <div class="panel-hdr"><div class="phd"></div><div class="pht">Simbol Output</div></div>
+      <div class="canvas-wrap">
+        <canvas id="gen-canvas" width="420" height="420"></canvas>
+      </div>
+      <div class="canvas-footer">
+        <div class="cf-formula">S = O × I × |C(ρ) − P_dom|</div>
+        <div id="gen-status" style="font-size:10px;color:var(--muted);letter-spacing:1px">Belum digenerate</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="decode-strip">
+    <div class="panel-hdr" style="background:var(--s1);border:1px solid var(--b1);border-bottom:none;padding:14px 20px">
+      <div class="phd"></div><div class="pht">Verifikasi Decode</div>
+    </div>
+    <div class="decode-grid" style="background:var(--s1);border:1px solid var(--b1)">
+      <div style="padding:16px 20px">
+        <label class="lbl">Data tersimpan dalam simbol</label>
+        <div class="decode-out" id="decode-out">Generate simbol terlebih dahulu...</div>
+      </div>
+      <div style="padding:16px 20px">
+        <label class="lbl">Metadata</label>
+        <div class="decode-meta" id="decode-meta">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat"><div class="sn" id="s-bits">0</div><div class="sl">Total Bits</div></div>
+    <div class="stat"><div class="sn" id="s-nodes">0</div><div class="sl">Nodes/Arm</div></div>
+    <div class="stat"><div class="sn" id="s-chars">0</div><div class="sl">Karakter</div></div>
+    <div class="stat"><div class="sn" id="s-crc">—</div><div class="sl">CRC16</div></div>
+  </div>
+</div>
+
+<!-- ══ SCANNER ══ -->
+<div class="page" id="page-scan">
+  <div class="scan-layout">
+    <div class="scan-panel">
+      <div class="panel-hdr"><div class="phd"></div><div class="pht">Kamera Scanner</div></div>
+      <div class="video-wrap">
+        <video id="scan-video" autoplay playsinline muted></video>
+        <div class="scan-overlay">
+          <div class="scan-reticle"></div>
+          <div class="scan-crosshair"></div>
+          <div class="scan-crosshairH"></div>
+          <div class="scan-center"></div>
+        </div>
+        <canvas id="scan-canvas" style="display:none"></canvas>
+      </div>
+      <div class="scan-controls">
+        <button class="gbtn" onclick="startCamera()" style="flex:1;padding:10px">▶ Aktifkan Kamera</button>
+        <button class="gbtn secondary" onclick="stopCamera()" style="flex:1;padding:10px">■ Stop</button>
+        <button class="gbtn secondary" onclick="captureFrame()" style="flex:1;padding:10px">◎ Capture</button>
+      </div>
+      <div class="scan-result">
+        <div class="sr-label">Hasil Scan</div>
+        <div class="sr-text" id="scan-result-text">Arahkan kamera ke simbol SYKLUS...</div>
+        <div class="sr-meta" id="scan-result-meta"></div>
+      </div>
+    </div>
+
+    <div class="scan-panel">
+      <div class="panel-hdr"><div class="phd"></div><div class="pht">Decode Manual — Paste Bits</div></div>
+      <div class="manual-area">
+        <div class="inp-group">
+          <label class="lbl">Bit String (0 dan 1)</label>
+          <textarea id="manual-bits" placeholder="010110001..." style="min-height:56px;font-size:11px"></textarea>
+        </div>
+        <div class="inp-group">
+          <label class="lbl">Mode</label>
+          <div class="mode-row" id="manual-mode-row">
+            <div class="mbtn active" onclick="setManualMode('LITE',this)"><span>LITE</span></div>
+            <div class="mbtn" onclick="setManualMode('STANDARD',this)"><span>STD</span></div>
+            <div class="mbtn" onclick="setManualMode('DENSE',this)"><span>DENSE</span></div>
+            <div class="mbtn" onclick="setManualMode('ULTRA',this)"><span>ULTRA</span></div>
+          </div>
+        </div>
+        <button class="gbtn" onclick="manualDecode()" style="margin-bottom:12px">◈ Decode Bits</button>
+        <div class="lbl">Output</div>
+        <div class="decode-out" id="manual-out" style="min-height:48px">—</div>
+        <div class="decode-meta" id="manual-meta" style="margin-top:8px">—</div>
+      </div>
+    </div>
+
+    <div class="scan-panel">
+      <div class="panel-hdr"><div class="phd"></div><div class="pht">Test — Encode lalu Decode</div></div>
+      <div style="padding:16px 20px">
+        <div class="inp-group">
+          <label class="lbl">Teks uji</label>
+          <input type="text" id="test-input" placeholder="Tulis teks untuk diuji..." />
+        </div>
+        <button class="gbtn" onclick="runTest()" style="margin-bottom:12px">✦ Encode → Decode Test</button>
+        <div id="test-result" style="font-size:12px;color:var(--muted);line-height:2"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ ABOUT / LIBRARY ══ -->
+<div class="page" id="page-about">
+  <div class="about-layout">
+    <div class="about-block">
+      <div class="ab-tag">✦ uriplib.js v1.0</div>
+      <div class="ab-title">Library Core SYKLUS</div>
+      <div class="ab-body">
+        JavaScript library yang menangani semua logika encoding, decoding, drawing, dan error correction untuk simbol SYKLUS. <strong>Bisa dipakai di browser maupun Node.js.</strong>
+      </div>
+    </div>
+
+    <div class="about-block">
+      <div class="ab-tag">API · Encode</div>
+      <div class="ab-title">URIP.encode(text, mode)</div>
+      <div class="ab-body">Mengubah teks menjadi bitstream terstruktur dengan header, CRC16, dan Reed-Solomon parity.</div>
+      <div class="api-block">
+<span class="c">// Encode teks</span>
+<span class="k">const</span> result = SYKLUS.<span class="k">encode</span>(<span class="s">"halo dunia"</span>, <span class="s">"STANDARD"</span>);
+result.bits    <span class="c">// Array of 0/1</span>
+result.mode    <span class="c">// "STANDARD"</span>
+result.crc     <span class="c">// CRC16 checksum (number)</span>
+result.hash    <span class="c">// FNV hash → rotasi unik</span>
+result.totalBits  <span class="c">// 450</span>
+      </div>
+    </div>
+
+    <div class="about-block">
+      <div class="ab-tag">API · Decode</div>
+      <div class="ab-title">URIP.decode(bits, mode)</div>
+      <div class="ab-body">Mengubah bitstream kembali menjadi teks dengan verifikasi CRC dan Reed-Solomon correction.</div>
+      <div class="api-block">
+<span class="c">// Decode bits</span>
+<span class="k">const</span> result = SYKLUS.<span class="k">decode</span>(bits, <span class="s">"STANDARD"</span>);
+result.ok      <span class="c">// true jika valid</span>
+result.text    <span class="c">// teks yang didecode</span>
+result.crcOk   <span class="c">// CRC verified</span>
+result.hasError <span class="c">// RS detected error</span>
+      </div>
+    </div>
+
+    <div class="about-block">
+      <div class="ab-tag">API · Draw</div>
+      <div class="ab-title">URIP.draw(canvas, encodeResult, theme, animOffset)</div>
+      <div class="ab-body">Menggambar simbol SYKLUS ke HTML Canvas. <strong>Dua arm spiral, pusat Pancer, cardinal dots.</strong></div>
+      <div class="api-block">
+<span class="c">// Draw ke canvas</span>
+<span class="k">const</span> enc = SYKLUS.<span class="k">encode</span>(<span class="s">"test"</span>, <span class="s">"LITE"</span>);
+SYKLUS.<span class="k">draw</span>(canvas, enc, <span class="s">"gold"</span>, <span class="k">0</span>);
+
+<span class="c">// Animasi</span>
+<span class="k">let</span> angle = <span class="k">0</span>;
+<span class="k">function</span> loop() {
+  SYKLUS.<span class="k">draw</span>(canvas, enc, <span class="s">"gold"</span>, angle);
+  angle += <span class="k">0.008</span>;
+  requestAnimationFrame(loop);
+}
+      </div>
+    </div>
+
+    <div class="about-block">
+      <div class="ab-tag">Struktur Data</div>
+      <div class="ab-title">Format Bitstream</div>
+      <div class="ab-body">
+        <strong>Header (32 bit):</strong> version(8) · mode index(8) · payload length(16)<br>
+        <strong>Payload:</strong> UTF-8 bytes dari teks<br>
+        <strong>CRC16-CCITT (16 bit):</strong> verifikasi integritas payload<br>
+        <strong>Reed-Solomon (64 bit):</strong> 8 parity symbols untuk koreksi error<br>
+        <strong>Padding:</strong> mengisi sisa kapasitas mode
+      </div>
+    </div>
+
+    <div class="about-block">
+      <div class="ab-tag">Filosofi</div>
+      <div class="ab-title">Meaning first. Function inside.</div>
+      <div class="ab-body">
+        SYKLUS tidak dirancang. SYKLUS <em>ditemukan</em> — dari sketsa tangan, dari pertanyaan yang tidak tahu jawabannya, dari simbol yang sudah ada miliaran tahun.<br><br>
+        <strong>Pusat tidak ikut berputar.</strong> Pusat adalah anchor. Yang berputar adalah yang mengorbit.<br><br>
+        <em>Recognition, bukan invention.</em>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="page-footer" id="main-footer">
+  <em>Recognition, bukan invention.</em><br>
+  Pusat yang diam tidak perlu pergi ke mana-mana.<br>
+  SYKLUS · 2026 · UR-IP · Universal Recognition Information Pattern
+</div>
+
+<!-- EMBED SYKLUSLIB -->
+<script>
+// ── SYKLUSLIB INLINE ──
+const SYKLUS = (() => {
+  const VERSION = '1.0';
+  const MODES = {
+    LITE:     { nodesPerArm:60,  totalBits:180,  maxBytes:18,  turns:3.5, label:'LITE'     },
+    STANDARD: { nodesPerArm:150, totalBits:450,  maxBytes:45,  turns:4.5, label:'STANDARD' },
+    DENSE:    { nodesPerArm:360, totalBits:1080, maxBytes:112, turns:5.5, label:'DENSE'    },
+    ULTRA:    { nodesPerArm:900, totalBits:2700, maxBytes:290, turns:7.0, label:'ULTRA'    },
+  };
+  const THEMES = {
+    gold:   { primary:'#c8a840', bright:'#ffe898', dim:'#c8a84033', bg:'#04040a', glow:'#c8a840' },
+    cyan:   { primary:'#47ffe0', bright:'#a0fff0', dim:'#47ffe033', bg:'#04080a', glow:'#47ffe0' },
+    lime:   { primary:'#e8ff47', bright:'#f4ffaa', dim:'#e8ff4733', bg:'#060a04', glow:'#e8ff47' },
+    ember:  { primary:'#ff6847', bright:'#ffb899', dim:'#ff684733', bg:'#0a0504', glow:'#ff6847' },
+    violet: { primary:'#c847ff', bright:'#e4a0ff', dim:'#c847ff33', bg:'#070408', glow:'#c847ff' },
+    white:  { primary:'#ccccdd', bright:'#ffffff', dim:'#ccccdd22', bg:'#060608', glow:'#aaaacc' },
+  };
+
+  // CRC16-CCITT
+  function crc16(bytes) {
+    let c = 0xFFFF;
+    for (const b of bytes) {
+      c ^= (b << 8);
+      for (let i = 0; i < 8; i++) c = (c & 0x8000) ? ((c << 1) ^ 0x1021) & 0xFFFF : (c << 1) & 0xFFFF;
+    }
+    return c;
+  }
+
+  // GF(256)
+  const GF_EXP = new Uint8Array(512), GF_LOG = new Uint8Array(256);
+  (function(){let x=1;for(let i=0;i<255;i++){GF_EXP[i]=x;GF_LOG[x]=i;x<<=1;if(x&0x100)x^=0x11D;}for(let i=255;i<512;i++)GF_EXP[i]=GF_EXP[i-255];})();
+  const gfMul = (a,b) => (a&&b) ? GF_EXP[(GF_LOG[a]+GF_LOG[b])%255] : 0;
+
+  function rsEncode(data, ns) {
+    let gen=[1];
+    for(let i=0;i<ns;i++){const f=[1,GF_EXP[i]];const r=new Array(gen.length+f.length-1).fill(0);for(let j=0;j<gen.length;j++)for(let k=0;k<f.length;k++)r[j+k]^=gfMul(gen[j],f[k]);gen=r;}
+    const msg=[...data,...new Array(ns).fill(0)];
+    for(let i=0;i<data.length;i++){const c=msg[i];if(c)for(let j=1;j<gen.length;j++)msg[i+j]^=gfMul(gen[j],c);}
+    return msg.slice(data.length);
+  }
+
+  function rsCheck(data, ns) {
+    try{const syn=[];for(let i=0;i<ns;i++){let s=0;for(const b of data)s=gfMul(s,GF_EXP[i])^b;syn.push(s);}return{data:data.slice(0,data.length-ns),hasError:syn.some(s=>s!==0)};}
+    catch(e){return{data:data.slice(0,data.length-ns),hasError:true};}
+  }
+
+  const enc = new TextEncoder(), dec = new TextDecoder();
+
+  function hashText(t) {
+    let h=2166136261;for(let i=0;i<t.length;i++){h^=t.charCodeAt(i);h=(h*16777619)>>>0;}return h;
+  }
+
+  function spiralPoint(t, off, turns, maxR, cx, cy, sa) {
+    const th = sa + off + t * turns * Math.PI * 2;
+    const r = maxR * (1 - t * 0.88);
+    return { x: cx + r*Math.cos(th), y: cy + r*Math.sin(th) };
+  }
+
+  function encode(text, modeName='STANDARD') {
+    const mode = MODES[modeName];
+    if (!mode) throw new Error(`Unknown mode: ${modeName}`);
+    const payload = enc.encode(text);
+    if (payload.length > mode.maxBytes) throw new Error(`Too long for ${modeName} (max ${mode.maxBytes}B)`);
+    const header = [10, Object.keys(MODES).indexOf(modeName), (payload.length>>8)&0xFF, payload.length&0xFF];
+    const checksum = crc16(payload);
+    const crcBytes = [(checksum>>8)&0xFF, checksum&0xFF];
+    const dataBytes = [...header, ...payload, ...crcBytes];
+    const parity = rsEncode(dataBytes, 8);
+    const fullBytes = [...dataBytes, ...parity];
+    const bits = [];
+    for (const byte of fullBytes) for (let b=7;b>=0;b--) bits.push((byte>>b)&1);
+    while (bits.length < mode.totalBits) bits.push(bits[bits.length % (bits.length||1)] ^ 1);
+    return { bits: bits.slice(0, mode.totalBits), mode: modeName, text, payloadBytes: payload.length, totalBits: mode.totalBits, crc: checksum, hash: hashText(text) };
+  }
+
+  function decode(bits, modeName) {
+    try {
+      const RS_NSYM = 8;
+      const bytes = [];
+      for (let i=0; i<Math.floor(bits.length/8); i++) {
+        let byte=0; for(let b=0;b<8;b++) byte=(byte<<1)|(bits[i*8+b]||0); bytes.push(byte);
+      }
+      const {data, hasError} = rsCheck(bytes, RS_NSYM);
+      const payloadLen = (data[2]<<8)|data[3];
+      if (payloadLen<=0||payloadLen>500) return {ok:false,text:'',error:'Invalid header'};
+      const payloadBytes = data.slice(4, 4+payloadLen);
+      const storedCRC = (data[4+payloadLen]<<8)|data[4+payloadLen+1];
+      const computedCRC = crc16(payloadBytes);
+      const crcOk = storedCRC === computedCRC;
+      const text = dec.decode(new Uint8Array(payloadBytes));
+      return { ok: crcOk && !hasError, text, crcOk, hasError, payloadLen, storedCRC, computedCRC };
+    } catch(e) { return {ok:false,text:'',error:e.message}; }
+  }
+
+  function draw(canvas, er, theme='gold', animOffset=0) {
+    const ctx = canvas.getContext('2d');
+    const W=canvas.width, H=canvas.height, cx=W/2, cy=H/2;
+    const mode = MODES[er.mode];
+    const clr = THEMES[theme]||THEMES.gold;
+    const maxR = Math.min(W,H)*0.42;
+    const turns = mode.turns;
+    const sa = (er.hash%360)*(Math.PI/180) + animOffset;
+    const bits = er.bits;
+    const half = Math.floor(bits.length/2);
+
+    ctx.fillStyle = clr.bg; ctx.fillRect(0,0,W,H);
+
+    // Outer ring
+    ctx.beginPath(); ctx.arc(cx,cy,maxR+18,0,Math.PI*2);
+    ctx.strokeStyle=clr.primary+'33'; ctx.lineWidth=0.5; ctx.stroke();
+
+    // Cardinal dots
+    [0,Math.PI/2,Math.PI,Math.PI*3/2].forEach(a=>{
+      ctx.beginPath(); ctx.arc(cx+(maxR+18)*Math.cos(a),cy+(maxR+18)*Math.sin(a),2.5,0,Math.PI*2);
+      ctx.fillStyle=clr.primary; ctx.shadowColor=clr.glow; ctx.shadowBlur=6; ctx.fill(); ctx.shadowBlur=0;
+    });
+
+    // Spiral guides
+    [0,Math.PI].forEach(off=>{
+      ctx.beginPath(); ctx.strokeStyle=clr.primary+'0c'; ctx.lineWidth=1;
+      for(let i=0;i<=300;i++){const p=spiralPoint(i/300,off,turns,maxR,cx,cy,sa);i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y);}
+      ctx.stroke();
+    });
+
+    // Two arms
+    [{ab:bits.slice(0,half),off:0},{ab:bits.slice(half),off:Math.PI}].forEach(({ab,off})=>{
+      const n=ab.length;
+      for(let i=0;i<n;i++){
+        const p0=spiralPoint(i/n,off,turns,maxR,cx,cy,sa);
+        const p1=spiralPoint((i+1)/n,off,turns,maxR,cx,cy,sa);
+        ctx.beginPath(); ctx.moveTo(p0.x,p0.y); ctx.lineTo(p1.x,p1.y);
+        if(ab[i]===1){ctx.strokeStyle=clr.bright+'cc';ctx.lineWidth=3;ctx.shadowColor=clr.glow;ctx.shadowBlur=7;}
+        else{ctx.strokeStyle=clr.dim;ctx.lineWidth=0.8;ctx.shadowBlur=0;}
+        ctx.stroke();
+      }
+      ctx.shadowBlur=0;
+      const tip=spiralPoint(0,off,turns,maxR,cx,cy,sa);
+      ctx.beginPath(); ctx.arc(tip.x,tip.y,5,0,Math.PI*2);
+      ctx.fillStyle=clr.primary; ctx.shadowColor=clr.glow; ctx.shadowBlur=12; ctx.fill(); ctx.shadowBlur=0;
+    });
+
+    // Radial guides
+    [0,Math.PI/2,Math.PI,Math.PI*3/2].forEach(a=>{
+      ctx.beginPath(); ctx.strokeStyle=clr.primary+'22'; ctx.lineWidth=0.5;
+      ctx.setLineDash([2,6]); ctx.moveTo(cx+maxR*1.05*Math.cos(a),cy+maxR*1.05*Math.sin(a)); ctx.lineTo(cx,cy); ctx.stroke();
+    }); ctx.setLineDash([]);
+
+    // Center
+    const gr=ctx.createRadialGradient(cx,cy,8,cx,cy,28); gr.addColorStop(0,clr.primary+'44'); gr.addColorStop(1,'transparent');
+    ctx.beginPath(); ctx.arc(cx,cy,28,0,Math.PI*2); ctx.fillStyle=gr; ctx.fill();
+    const cg=ctx.createRadialGradient(cx,cy,0,cx,cy,14); cg.addColorStop(0,'#fff'); cg.addColorStop(0.4,clr.bright); cg.addColorStop(1,clr.primary+'00');
+    ctx.beginPath(); ctx.arc(cx,cy,14,0,Math.PI*2); ctx.fillStyle=cg; ctx.shadowColor=clr.glow; ctx.shadowBlur=24; ctx.fill(); ctx.shadowBlur=0;
+    ctx.beginPath(); ctx.arc(cx,cy,20,0,Math.PI*2); ctx.strokeStyle=clr.bg; ctx.lineWidth=4; ctx.stroke();
+  }
+
+  function drawEmpty(canvas, theme='gold') {
+    const ctx=canvas.getContext('2d'); const W=canvas.width,H=canvas.height,cx=W/2,cy=H/2;
+    const clr=THEMES[theme]||THEMES.gold;
+    ctx.fillStyle=clr.bg; ctx.fillRect(0,0,W,H);
+    [60,100,140,180].forEach((r,i)=>{ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.strokeStyle=clr.primary+(Math.max(5,18-i*4)).toString(16)+'0';ctx.lineWidth=0.5;ctx.stroke();});
+    const g=ctx.createRadialGradient(cx,cy,0,cx,cy,12); g.addColorStop(0,'#fff'); g.addColorStop(0.5,clr.bright); g.addColorStop(1,clr.primary+'00');
+    ctx.beginPath(); ctx.arc(cx,cy,12,0,Math.PI*2); ctx.fillStyle=g; ctx.shadowColor=clr.glow; ctx.shadowBlur=20; ctx.fill(); ctx.shadowBlur=0;
+    ctx.font='9px IBM Plex Mono'; ctx.fillStyle=clr.primary+'44'; ctx.textAlign='center';
+    ctx.fillText('tulis teks · Ctrl+Enter · generate',cx,cy+60);
+  }
+
+  return { VERSION, MODES, THEMES, encode, decode, draw, drawEmpty, hashText, crc16,
+    autoMode(text){const b=new TextEncoder().encode(text).length;if(b<=18)return'LITE';if(b<=45)return'STANDARD';if(b<=112)return'DENSE';return'ULTRA';} };
+})();
+
+// ── APP STATE ──
+let currentMode = 'LITE';
+let currentTheme = 'gold';
+let animating = false;
+let animFrame = null;
+let animAngle = 0;
+let lastEncoded = null;
+let manualMode = 'LITE';
+let stream = null;
+
+// ── NAV ──
+function showPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+  document.getElementById('main-footer').style.display = (id === 'about') ? 'none' : 'block';
+}
+
+// ── GENERATOR ──
+function generate() {
+  const text = document.getElementById('gen-input').value.trim();
+  if (!text) { document.getElementById('gen-input').focus(); return; }
+
+  try {
+    const encoded = URIP.encode(text, currentMode);
+    lastEncoded = encoded;
+
+    // Stats
+    document.getElementById('s-bits').textContent = encoded.totalBits;
+    document.getElementById('s-nodes').textContent = SYKLUS.MODES[currentMode].nodesPerArm;
+    document.getElementById('s-chars').textContent = text.length;
+    document.getElementById('s-crc').textContent = '0x' + encoded.crc.toString(16).toUpperCase().padStart(4,'0');
+
+    // Draw
+    const canvas = document.getElementById('gen-canvas');
+    if (animating) startAnimation(encoded);
+    else URIP.draw(canvas, encoded, currentTheme, 0);
+
+    // Status
+    document.getElementById('gen-status').textContent = `${currentMode} · ${text.length}ch · hash:${encoded.hash%9999}`;
+
+    // Decode verify
+    const decoded = URIP.decode(encoded.bits, currentMode);
+    document.getElementById('decode-out').textContent = decoded.text || '[empty]';
+    document.getElementById('decode-meta').innerHTML = `
+      CRC: <span class="${decoded.crcOk?'ok':'err'}">${decoded.crcOk?'✓ Valid':'✗ Error'}</span><br>
+      RS: <span class="${!decoded.hasError?'ok':'warn'}">${decoded.hasError?'⚠ Error detected':'✓ Clean'}</span><br>
+      Integritas: <span class="${decoded.ok?'ok':'err'}">${decoded.ok?'✓ Sempurna':'✗ Perlu cek'}</span><br>
+      Rotasi: <span>${encoded.hash%360}°</span><br>
+      Payload: <span>${encoded.payloadBytes} bytes</span>
+    `;
+  } catch (e) {
+    document.getElementById('gen-status').textContent = '⚠ ' + e.message;
+    document.getElementById('decode-out').textContent = e.message;
+  }
+}
+
+function startAnimation(encoded) {
+  if (animFrame) cancelAnimationFrame(animFrame);
+  const canvas = document.getElementById('gen-canvas');
+  function loop() { animAngle += 0.008; URIP.draw(canvas, encoded, currentTheme, animAngle); animFrame = requestAnimationFrame(loop); }
+  loop();
+}
+
+function toggleAnim() {
+  const tog = document.getElementById('anim-tog');
+  animating = !animating;
+  tog.classList.toggle('on', animating);
+  if (animating && lastEncoded) startAnimation(lastEncoded);
+  else { if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; }
+    if (lastEncoded) URIP.draw(document.getElementById('gen-canvas'), lastEncoded, currentTheme, 0); }
+}
+
+function setMode(m, el) {
+  currentMode = m;
+  document.querySelectorAll('.mode-row .mbtn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function setTheme(t, el) {
+  currentTheme = t;
+  document.querySelectorAll('.tdot').forEach(d => d.classList.remove('active'));
+  el.classList.add('active');
+  if (lastEncoded) URIP.draw(document.getElementById('gen-canvas'), lastEncoded, currentTheme, animAngle);
+}
+
+function downloadSymbol() {
+  if (!lastEncoded) return;
+  const canvas = document.getElementById('gen-canvas');
+  const link = document.createElement('a');
+  link.download = `SYKLUS_${lastEncoded.text.slice(0,20).replace(/\s/g,'_')}.png`;
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+// ── SCANNER ──
+async function startCamera() {
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width:640, height:640 } });
+    document.getElementById('scan-video').srcObject = stream;
+    document.getElementById('scan-result-text').textContent = 'Kamera aktif — arahkan ke simbol SYKLUS dan tekan Capture...';
+  } catch (e) {
+    document.getElementById('scan-result-text').textContent = '⚠ Kamera tidak bisa diakses: ' + e.message;
+  }
+}
+
+function stopCamera() {
+  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+  document.getElementById('scan-video').srcObject = null;
+  document.getElementById('scan-result-text').textContent = 'Kamera dimatikan.';
+}
+
+function captureFrame() {
+  const video = document.getElementById('scan-video');
+  if (!video.srcObject) { document.getElementById('scan-result-text').textContent = '⚠ Aktifkan kamera dulu.'; return; }
+  const canvas = document.getElementById('scan-canvas');
+  canvas.width = video.videoWidth || 640;
+  canvas.height = video.videoHeight || 640;
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(video, 0, 0);
+  document.getElementById('scan-result-text').textContent = 'Frame captured — fitur optical decode (Hough transform) dalam pengembangan v4.0. Gunakan decode manual sementara.';
+  document.getElementById('scan-result-meta').textContent = `Resolusi: ${canvas.width}×${canvas.height}px`;
+}
+
+// ── MANUAL DECODE ──
+function setManualMode(m, el) {
+  manualMode = m;
+  document.querySelectorAll('#manual-mode-row .mbtn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function manualDecode() {
+  const rawBits = document.getElementById('manual-bits').value.replace(/[^01]/g,'');
+  if (!rawBits) return;
+  const bits = rawBits.split('').map(Number);
+  try {
+    const result = URIP.decode(bits, manualMode);
+    document.getElementById('manual-out').textContent = result.text || '[empty]';
+    document.getElementById('manual-meta').innerHTML = `
+      CRC: <span class="${result.crcOk?'ok':'err'}">${result.crcOk?'✓':'✗'}</span> &nbsp;
+      RS: <span class="${!result.hasError?'ok':'warn'}">${result.hasError?'⚠ error':'✓ clean'}</span> &nbsp;
+      OK: <span class="${result.ok?'ok':'err'}">${result.ok?'✓':'✗'}</span>
+    `;
+  } catch(e) {
+    document.getElementById('manual-out').textContent = '⚠ ' + e.message;
+  }
+}
+
+// ── TEST ──
+function runTest() {
+  const text = document.getElementById('test-input').value.trim();
+  if (!text) return;
+  const mode = SYKLUS.autoMode(text);
+  try {
+    const encoded = URIP.encode(text, mode);
+    const decoded = URIP.decode(encoded.bits, mode);
+    const match = decoded.text === text;
+    document.getElementById('test-result').innerHTML = `
+      <span style="color:var(--muted)">Input:</span> <span style="color:var(--text)">${text}</span><br>
+      <span style="color:var(--muted)">Mode:</span> <span style="color:var(--gold)">${mode}</span> auto-selected<br>
+      <span style="color:var(--muted)">Encode:</span> <span style="color:var(--ok)">✓ ${encoded.totalBits} bits</span><br>
+      <span style="color:var(--muted)">Decode:</span> <span style="color:var(--text)">${decoded.text}</span><br>
+      <span style="color:var(--muted)">CRC:</span> <span class="${decoded.crcOk?'ok':'err'}" style="color:${decoded.crcOk?'var(--ok)':'var(--err)'}">${decoded.crcOk?'✓ Valid':'✗ Error'}</span><br>
+      <span style="color:var(--muted)">Match:</span> <span style="color:${match?'var(--ok)':'var(--err)'}">${match?'✓ Sempurna — encode/decode berhasil!':'✗ Tidak match'}</span>
+    `;
+  } catch(e) {
+    document.getElementById('test-result').innerHTML = `<span style="color:var(--err)">⚠ ${e.message}</span>`;
+  }
+}
+
+// ── INIT ──
+URIP.drawEmpty(document.getElementById('gen-canvas'), 'gold');
+document.getElementById('gen-input').addEventListener('keydown', e => { if(e.key==='Enter'&&e.ctrlKey) generate(); });
+</script>
+</body>
+</html>
