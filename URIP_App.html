@@ -562,6 +562,11 @@ const URIP = SYKLUS; // UR-IP alias
     autoMode(text){const b=new TextEncoder().encode(text).length;if(b<=18)return'LITE';if(b<=45)return'STANDARD';if(b<=112)return'DENSE';return'ULTRA';} };
 })();
 
+// ── UR-IP ALIAS ── 
+const URIP = SYKLUS;
+window.URIP = SYKLUS;
+window.SYKLUS = SYKLUS;
+
 // ── APP STATE ──
 let currentMode = 'LITE';
 let currentTheme = 'gold';
