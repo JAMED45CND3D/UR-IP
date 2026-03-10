@@ -258,7 +258,7 @@ video{width:100%;height:100%;object-fit:cover;display:block}
       </div>
       <div class="scan-result">
         <div class="sr-label">Hasil Scan</div>
-        <div class="sr-text" id="scan-result-text">Arahkan kamera ke simbol SYKLUS...</div>
+        <div class="sr-text" id="scan-result-text">Arahkan kamera ke simbol UR-IP...</div>
         <div class="sr-meta" id="scan-result-meta"></div>
       </div>
     </div>
@@ -422,6 +422,7 @@ const SYKLUS = (() => {
   // GF(256)
   const GF_EXP = new Uint8Array(512), GF_LOG = new Uint8Array(256);
   (function(){let x=1;for(let i=0;i<255;i++){GF_EXP[i]=x;GF_LOG[x]=i;x<<=1;if(x&0x100)x^=0x11D;}for(let i=255;i<512;i++)GF_EXP[i]=GF_EXP[i-255];})();
+const URIP = SYKLUS; // UR-IP alias
   const gfMul = (a,b) => (a&&b) ? GF_EXP[(GF_LOG[a]+GF_LOG[b])%255] : 0;
 
   function rsEncode(data, ns) {
@@ -672,7 +673,7 @@ async function startCamera() {
   try {
     stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment', width:640, height:640 } });
     document.getElementById('scan-video').srcObject = stream;
-    document.getElementById('scan-result-text').textContent = 'Kamera aktif — arahkan ke simbol SYKLUS dan tekan Capture...';
+    document.getElementById('scan-result-text').textContent = 'Kamera aktif — arahkan ke simbol UR-IP dan tekan Capture...';
   } catch (e) {
     document.getElementById('scan-result-text').textContent = '⚠ Kamera tidak bisa diakses: ' + e.message;
   }
