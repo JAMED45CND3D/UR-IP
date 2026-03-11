@@ -6,7 +6,7 @@
 
 ## Akses Aplikasi
 
-🔗 **[jamed45cnd3d.github.io/UR-IP/URIP_App_v10.html](https://jamed45cnd3d.github.io/UR-IP/URIP_App_v10.html)**
+🔗 **[jamed45cnd3d.github.io/UR-IP/URIP_App.html](https://jamed45cnd3d.github.io/UR-IP/URIP_App.html)**
 
 ---
 
