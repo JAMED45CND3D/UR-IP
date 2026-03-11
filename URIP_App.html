@@ -742,6 +742,13 @@ function downloadPNG() {
 // IMAGE DECODE ENGINE
 // ══════════════════════════════════════════════════════════
 
+// ══════════════════════════════════════════════════════════
+// RADAR DECODE ENGINE
+// Prinsip: pancarkan probe sepanjang spiral
+//          baca PUNCAK sinyal yang kembali
+//          bukan threshold absolut
+// ══════════════════════════════════════════════════════════
+
 // Otsu threshold
 function otsuThreshold(imgData, W, H) {
   const hist = new Array(256).fill(0);
@@ -764,12 +771,12 @@ function otsuThreshold(imgData, W, H) {
   return thresh;
 }
 
-// Sample area around a point
+// Sample brightness in circular area
 function sampleArea(imgData, W, H, px, py, radius) {
   let sum = 0, cnt = 0;
   const r = Math.max(2, Math.round(radius));
   for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
-    if (dx*dx + dy*dy > r*r) continue; // circle mask
+    if (dx*dx + dy*dy > r*r) continue;
     const x = Math.round(px + dx), y = Math.round(py + dy);
     if (x >= 0 && x < W && y >= 0 && y < H) {
       const i = (y * W + x) * 4;
@@ -777,70 +784,165 @@ function sampleArea(imgData, W, H, px, py, radius) {
       cnt++;
     }
   }
-  return cnt > 0 ? sum / cnt : 128;
+  return cnt > 0 ? sum / cnt : 0;
 }
 
-// Detect center by finding brightest compact region
+// RADAR: scan along spiral arm, collect brightness profile per node
+// Returns array of brightness values (not bits yet)
+function radarScanArm(imgData, W, H, cx, cy, scale, n, offset, mode) {
+  const profile = [];
+  const drawR = (i) => URIP.nodeDrawRadius(i, n, mode, scale);
+
+  for (let i = 0; i < n; i++) {
+    const p = URIP.spiralPoint(i, n, offset, cx, cy, scale, mode);
+    const r = drawR(i);
+    // Primary sample — at exact node position
+    const b0 = sampleArea(imgData, W, H, p.x, p.y, r * 0.9);
+    // Neighbor samples — small offset along spiral to check local peak
+    const pPrev = i > 0   ? URIP.spiralPoint(i-1, n, offset, cx, cy, scale, mode) : null;
+    const pNext = i < n-1 ? URIP.spiralPoint(i+1, n, offset, cx, cy, scale, mode) : null;
+    // Background = average of midpoints between nodes (not on nodes)
+    let bgSamples = [];
+    if (pPrev) {
+      const mid = { x:(p.x+pPrev.x)/2, y:(p.y+pPrev.y)/2 };
+      bgSamples.push(sampleArea(imgData, W, H, mid.x, mid.y, r * 0.5));
+    }
+    if (pNext) {
+      const mid = { x:(p.x+pNext.x)/2, y:(p.y+pNext.y)/2 };
+      bgSamples.push(sampleArea(imgData, W, H, mid.x, mid.y, r * 0.5));
+    }
+    const bg = bgSamples.length ? bgSamples.reduce((a,b)=>a+b)/bgSamples.length : 0;
+    // RADAR RETURN: signal above local background = node present
+    // This is relative, not absolute — like radar contrast
+    profile.push({ signal: b0, background: bg, contrast: b0 - bg, idx: i });
+  }
+  return profile;
+}
+
+// Convert radar profile to bits using local contrast
+// A node is "1" if its signal peaks above local background
+function profileToBits(profile, globalThresh) {
+  // Normalize contrast values
+  const contrasts = profile.map(p => p.contrast);
+  const maxC = Math.max(...contrasts);
+  const minC = Math.min(...contrasts);
+  const range = maxC - minC || 1;
+
+  // Dynamic local threshold per node using sliding window
+  const WINDOW = 5;
+  return profile.map((p, i) => {
+    // Local window average contrast
+    const lo = Math.max(0, i - WINDOW);
+    const hi = Math.min(profile.length - 1, i + WINDOW);
+    const windowContrasts = contrasts.slice(lo, hi+1);
+    const localMean = windowContrasts.reduce((a,b)=>a+b) / windowContrasts.length;
+    const localMax  = Math.max(...windowContrasts);
+
+    // Bit = 1 if this node's contrast is in top half of local window
+    // AND signal is above global threshold
+    const normalizedC = (p.contrast - minC) / range;
+    const isAboveLocal = p.contrast > (localMean + localMax) / 2;
+    const isAboveGlobal = p.signal > globalThresh;
+
+    return (isAboveLocal && isAboveGlobal) ? 1 : 0;
+  });
+}
+
+// Find center anchor — the brightest compact cluster (Pancer)
 function findCenter(imgData, W, H) {
-  // Sample grid, find brightest area in center 60%
+  // Scan center 60% of image for brightest region
   let maxBright = 0, cx = W/2, cy = H/2;
-  const x0 = W * 0.2, x1 = W * 0.8, y0 = H * 0.2, y1 = H * 0.8;
-  for (let y = y0; y < y1; y += 4) for (let x = x0; x < x1; x += 4) {
-    const i = (Math.floor(y) * W + Math.floor(x)) * 4;
-    const b = (imgData[i] + imgData[i+1] + imgData[i+2]) / 3;
+  const x0 = W*0.2, x1 = W*0.8, y0 = H*0.2, y1 = H*0.8;
+  const R = Math.min(W, H) * 0.04; // compact cluster radius
+  for (let y = y0; y < y1; y += 3) for (let x = x0; x < x1; x += 3) {
+    const b = sampleArea(imgData, W, H, x, y, R);
     if (b > maxBright) { maxBright = b; cx = x; cy = y; }
   }
   return { cx, cy, maxBright };
 }
 
-// Try decode with given center and scale
-function tryDecodeTriskelion(imgData, W, H, cx, cy, scale, modeName, thresh, invert) {
+// Full radar decode — one attempt at given cx,cy,scale
+function radarDecode(imgData, W, H, cx, cy, scale, modeName, globalThresh) {
   const mode = URIP.MODES[modeName];
   const n = mode.nodesPerArm;
-  const offsets = [0, 2 * Math.PI / 3, 4 * Math.PI / 3];
-  const arms = [[], [], []];
+  const offsets = [0, 2*Math.PI/3, 4*Math.PI/3];
+  const arms = [];
 
-  offsets.forEach((offset, si) => {
-    for (let i = 0; i < n; i++) {
-      const p = URIP.spiralPoint(i, n, offset, cx, cy, scale, mode);
-      // Use EXACT same radius formula as draw
-      const drawR = URIP.nodeDrawRadius(i, n, mode, scale);
-      // Sample at 80% of draw radius — inside the node, not the edge
-      const sampleR = Math.max(1.5, drawR * 0.8);
-      let brightness = sampleArea(imgData, W, H, p.x, p.y, sampleR);
-      let bit = brightness > thresh ? 1 : 0; // bright = node present = 1
-      if (invert) bit = 1 - bit;
-      arms[si].push(bit);
-    }
-  });
+  for (const offset of offsets) {
+    const profile = radarScanArm(imgData, W, H, cx, cy, scale, n, offset, mode);
+    const bits = profileToBits(profile, globalThresh);
+    arms.push(bits);
+  }
 
   return URIP.decode(arms, modeName);
 }
 
-// Full decode from canvas context
+// Simple direct decode — untuk PNG generated by app (exact coordinates known)
+function directDecode(imgData, W, H, cx, cy, scale, modeName, thresh) {
+  const mode = URIP.MODES[modeName];
+  const n = mode.nodesPerArm;
+  const offsets = [0, 2*Math.PI/3, 4*Math.PI/3];
+  const arms = [];
+
+  for (const offset of offsets) {
+    const bits = [];
+    for (let i = 0; i < n; i++) {
+      const p = URIP.spiralPoint(i, n, offset, cx, cy, scale, mode);
+      const r = Math.max(2, URIP.nodeDrawRadius(i, n, mode, scale) * 0.85);
+      const b = sampleArea(imgData, W, H, p.x, p.y, r);
+      bits.push(b > thresh ? 1 : 0);
+    }
+    arms.push(bits);
+  }
+  return URIP.decode(arms, modeName);
+}
+
+// Master decode — tries modes, scales, inverted
 function decodeFromImageData(ctx, W, H) {
   const imgData = ctx.getImageData(0, 0, W, H).data;
   const thresh = otsuThreshold(imgData, W, H);
-  const { cx, cy, maxBright } = findCenter(imgData, W, H);
 
   const modes = ['LITE', 'STANDARD', 'DENSE'];
+  const baseScale = Math.min(W, H) * 0.33;
+  const scales = [baseScale, baseScale*0.97, baseScale*1.03,
+                  baseScale*0.94, baseScale*1.06];
+
   let best = null;
 
-  // Try different scales (image might be zoomed)
-  const baseScale = Math.min(W, H) * 0.33;
-  const scales = [baseScale, baseScale * 0.95, baseScale * 1.05, baseScale * 0.9, baseScale * 1.1];
+  // ── PASS 1: Direct decode, exact center W/2 H/2 ──
+  // PNG dari app: center selalu tepat di tengah
+  const cx0 = W / 2, cy0 = H / 2;
+  for (const modeName of modes) {
+    for (const scale of scales) {
+      // Try normal threshold
+      const res = directDecode(imgData, W, H, cx0, cy0, scale, modeName, thresh);
+      if (res && res.ok) return { res, modeName };
+      if (!best && res?.text?.replace(/[^\x20-\x7E]/g,'').length > 1) best = { res, modeName };
 
-  for (const invert of [false, true]) {
+      // Try lower threshold (dim nodes)
+      const res2 = directDecode(imgData, W, H, cx0, cy0, scale, modeName, thresh * 0.7);
+      if (res2 && res2.ok) return { res: res2, modeName };
+    }
+  }
+
+  // ── PASS 2: Radar decode, detected center (kamera/foto luar) ──
+  const { cx, cy } = findCenter(imgData, W, H);
+  const allCenters = [[cx0, cy0]];
+  if (Math.hypot(cx-cx0, cy-cy0) > 4) allCenters.push([cx, cy]);
+
+  const scalesFull = [baseScale, baseScale*0.95, baseScale*1.05,
+                      baseScale*0.9, baseScale*1.1, baseScale*0.85, baseScale*1.15];
+
+  for (const [pcx, pcy] of allCenters) {
     for (const modeName of modes) {
-      for (const scale of scales) {
-        const res = tryDecodeTriskelion(imgData, W, H, cx, cy, scale, modeName, thresh, invert);
-        if (res && res.ok) return { res, modeName, invert };
-        if (!best && res && res.text && res.text.replace(/[^\x20-\x7E]/g,'').length > 1) {
-          best = { res, modeName, invert };
-        }
+      for (const scale of scalesFull) {
+        const res = radarDecode(imgData, W, H, pcx, pcy, scale, modeName, thresh);
+        if (res && res.ok) return { res, modeName };
+        if (!best && res?.text?.replace(/[^\x20-\x7E]/g,'').length > 1) best = { res, modeName };
       }
     }
   }
+
   return best || null;
 }
 
