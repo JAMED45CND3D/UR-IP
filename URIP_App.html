@@ -3,125 +3,295 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>UR-IP v9 · SYKLUS</title>
+<title>UR-IP v10 · Identity Pointer System</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=IBM+Plex+Mono:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#04040a;--bg2:#08080f;--dim:#121224;--gold:#c8a840;--g2:#ffe898;--g3:#3a2010;--tx:#e0dfc8;--mu:#48486a;--ok:#47ff8a;--er:#ff476a;--wn:#ffbb47;--cy:#47e8ff;--vi:#c0a0ff}
+:root{
+  --bg:#060610;--bg2:#0c0c1a;--bg3:#10101e;
+  --dim:#1e1e36;--dim2:#2a2a44;
+  --gold:#c8a840;--g2:#ffe898;--g3:#2a1a06;
+  --tx:#f0efdf;--mu:#606088;--mu2:#8888aa;
+  --ok:#3dff7a;--er:#ff3d5a;--wn:#ffb83d;
+  --cy:#3de8ff;--vi:#aa88ff;--wh:#ffffff;
+}
 *{margin:0;padding:0;box-sizing:border-box}
-body{background:var(--bg);color:var(--tx);font-family:'IBM Plex Mono',monospace;min-height:100vh}
-body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 40% at 50% 0%,rgba(200,168,64,.05),transparent 70%);pointer-events:none}
-nav{position:sticky;top:0;z-index:100;background:rgba(4,4,10,.96);border-bottom:1px solid var(--dim);display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:44px;backdrop-filter:blur(10px)}
-.nb{font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:var(--g2);letter-spacing:3px}
-.nv{font-size:8px;color:var(--mu);letter-spacing:2px;margin-left:8px}
-.tabs{display:flex}
-.tab{padding:0 16px;height:44px;display:flex;align-items:center;font-size:9px;letter-spacing:2px;color:var(--mu);cursor:pointer;border-bottom:2px solid transparent;text-transform:uppercase;transition:all .2s;background:none;border-top:none;border-left:none;border-right:none;font-family:'IBM Plex Mono',monospace}
+body{background:var(--bg);color:var(--tx);font-family:'IBM Plex Mono',monospace;min-height:100vh;overflow-x:hidden;font-size:10px}
+
+/* NOISE TEXTURE */
+body::before{content:'';position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:0;opacity:.4}
+body::after{content:'';position:fixed;inset:0;
+  background:radial-gradient(ellipse 60% 40% at 50% 0%,rgba(200,168,64,.06),transparent 70%);
+  pointer-events:none;z-index:0}
+
+/* NAV */
+nav{position:sticky;top:0;z-index:200;height:48px;
+  background:rgba(3,3,10,.92);border-bottom:1px solid var(--dim);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;backdrop-filter:blur(16px)}
+.nb{display:flex;align-items:center;gap:10px}
+.logo{font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:var(--g2);letter-spacing:4px}
+.ver{font-size:7px;color:var(--mu2);letter-spacing:3px;padding:2px 7px;border:1px solid var(--dim2)}
+.tabs{display:flex;height:48px}
+.tab{height:48px;padding:0 18px;display:flex;align-items:center;
+  font-size:8px;letter-spacing:3px;color:var(--mu2);cursor:pointer;
+  border-bottom:2px solid transparent;text-transform:uppercase;
+  transition:all .25s;background:none;border-top:none;border-left:none;border-right:none;
+  font-family:'IBM Plex Mono',monospace}
 .tab:hover{color:var(--tx)}
 .tab.on{color:var(--gold);border-bottom-color:var(--gold)}
-.page{display:none;max-width:960px;margin:0 auto;padding:24px 20px;position:relative;z-index:1}
+
+/* LAYOUT */
+.page{display:none;max-width:1000px;margin:0 auto;padding:28px 24px;position:relative;z-index:1}
 .page.on{display:block}
+
+/* GRID */
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-bottom:2px}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;margin-bottom:2px}
 .g4{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;margin-bottom:2px}
-.card{background:var(--bg2);border:1px solid var(--dim);margin-bottom:2px}
-.ch{padding:10px 16px;border-bottom:1px solid var(--dim);display:flex;align-items:center;justify-content:space-between}
-.ct{font-size:9px;letter-spacing:3px;color:var(--mu);text-transform:uppercase}
-.cb{padding:16px}
-.cv{display:flex;align-items:center;justify-content:center;padding:20px;background:var(--bg)}
+
+/* CARDS */
+.card{background:var(--bg2);border:1px solid var(--dim2);margin-bottom:2px}
+.ch{padding:11px 18px;border-bottom:1px solid var(--dim);
+  display:flex;align-items:center;justify-content:space-between}
+.ct{font-size:8px;letter-spacing:3px;color:#9999bb;text-transform:uppercase}
+.cb{padding:18px}
+.cv{display:flex;align-items:center;justify-content:center;
+  padding:20px;background:var(--bg)}
 canvas{display:block}
-.bx{font-size:8px;letter-spacing:2px;padding:3px 9px;border:1px solid}
+
+/* BADGE */
+.bx{font-size:7px;letter-spacing:2px;padding:3px 9px;border:1px solid}
+
+/* INPUTS */
 .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
-input[type=text]{flex:1;min-width:100px;padding:9px 14px;background:var(--bg);border:1px solid var(--dim);color:var(--tx);font-family:'IBM Plex Mono',monospace;font-size:13px;outline:none;transition:border-color .2s}
-input[type=text]:focus{border-color:var(--gold)}
-select{padding:9px 14px;background:var(--bg);border:1px solid var(--dim);color:var(--tx);font-family:'IBM Plex Mono',monospace;font-size:9px;outline:none;cursor:pointer}
-.btn{padding:9px 18px;background:transparent;border:1px solid var(--dim);color:var(--mu);font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;cursor:pointer;transition:all .2s;text-transform:uppercase}
+input[type=text],input[type=url],textarea{
+  width:100%;padding:10px 14px;background:var(--bg);border:1px solid var(--dim2);
+  color:var(--tx);font-family:'IBM Plex Mono',monospace;font-size:11px;
+  outline:none;transition:border-color .2s;resize:none}
+input[type=text]:focus,input[type=url]:focus,textarea:focus{border-color:var(--gold)}
+.field{margin-bottom:8px}
+.flabel{font-size:8px;letter-spacing:2px;color:#9090b8;text-transform:uppercase;margin-bottom:4px}
+select{padding:10px 14px;background:var(--bg);border:1px solid var(--dim2);
+  color:var(--tx);font-family:'IBM Plex Mono',monospace;font-size:9px;outline:none;cursor:pointer;width:100%}
+
+/* BUTTONS */
+.btn{padding:10px 20px;background:transparent;border:1px solid var(--dim2);
+  color:var(--mu2);font-family:'IBM Plex Mono',monospace;font-size:9px;
+  letter-spacing:2px;cursor:pointer;transition:all .2s;text-transform:uppercase;white-space:nowrap}
 .btn:hover{border-color:var(--g3);color:var(--tx)}
-.btn.p{border-color:var(--gold);color:var(--gold);background:rgba(200,168,64,.06)}
-.btn.p:hover{background:rgba(200,168,64,.12)}
-.st{padding:10px 14px;font-size:9px;letter-spacing:1px;border:1px solid var(--dim);margin-bottom:2px}
-.st.ok{color:var(--ok);border-color:rgba(71,255,138,.2)}
-.st.er{color:var(--er);border-color:rgba(255,71,106,.2)}
-.st.wn{color:var(--wn);border-color:rgba(255,187,71,.2)}
-.st.nf{color:var(--mu);border-color:var(--dim)}
+.btn.p{border-color:var(--gold);color:var(--gold);background:rgba(200,168,64,.07)}
+.btn.p:hover{background:rgba(200,168,64,.14)}
+.btn.ok{border-color:var(--ok);color:var(--ok)}
+.btn.er{border-color:var(--er);color:var(--er)}
+.btn.full{width:100%}
+
+/* STATUS */
+.st{padding:10px 14px;font-size:9px;letter-spacing:1px;
+  border:1px solid var(--dim);margin-bottom:2px;line-height:1.6}
+.st.ok{color:var(--ok);border-color:rgba(61,255,122,.15);background:rgba(61,255,122,.03)}
+.st.er{color:var(--er);border-color:rgba(255,61,90,.15)}
+.st.wn{color:var(--wn);border-color:rgba(255,184,61,.15)}
+.st.nf{color:#7878a0;border-color:var(--dim2)}
+
+/* STATS */
 .sv{background:var(--bg);border:1px solid var(--dim);padding:14px;text-align:center}
-.sval{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--gold);margin-bottom:4px}
-.sk{font-size:8px;letter-spacing:2px;color:var(--mu);text-transform:uppercase}
-.drop{border:1px dashed var(--dim);padding:32px;text-align:center;cursor:pointer;transition:all .2s}
+.sval{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;color:var(--gold);margin-bottom:3px}
+.sk{font-size:7px;letter-spacing:2px;color:var(--mu2);text-transform:uppercase}
+
+/* DOWNLOAD */
+.dl{display:block;width:100%;padding:13px;text-align:center;
+  background:rgba(200,168,64,.07);border:1px solid var(--gold);
+  color:var(--gold);font-family:'IBM Plex Mono',monospace;font-size:9px;
+  letter-spacing:3px;cursor:pointer;text-decoration:none;
+  text-transform:uppercase;transition:all .2s;margin-bottom:2px}
+.dl:hover{background:rgba(200,168,64,.16)}
+
+/* DROP AREA */
+.drop{border:1px dashed var(--dim2);padding:36px;text-align:center;
+  cursor:pointer;transition:all .2s;position:relative}
 .drop:hover,.drop.hl{border-color:var(--gold);background:rgba(200,168,64,.03)}
-.rval{font-family:'Syne',sans-serif;font-size:36px;font-weight:800;color:var(--g2);letter-spacing:3px;text-align:center;padding:24px 0}
-.rmeta{font-size:9px;color:var(--mu);letter-spacing:2px;text-align:center;padding-bottom:8px}
-.dl{display:block;width:100%;padding:12px;text-align:center;background:rgba(200,168,64,.06);border:1px solid var(--gold);color:var(--gold);font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:3px;cursor:pointer;text-decoration:none;text-transform:uppercase;transition:all .2s;margin-bottom:2px}
-.dl:hover{background:rgba(200,168,64,.14)}
+.drop-icon{font-size:36px;margin-bottom:10px;opacity:.25}
+.drop-txt{font-size:9px;color:#8888aa;letter-spacing:3px;text-transform:uppercase}
+
+/* RESULT */
+.rval{font-family:'Syne',sans-serif;font-size:40px;font-weight:800;
+  color:var(--g2);letter-spacing:3px;text-align:center;padding:20px 0 8px}
+.rmeta{font-size:9px;color:var(--mu2);letter-spacing:2px;text-align:center;margin-bottom:16px}
+
+/* POINTER DATA DISPLAY */
+.ptr-section{border:1px solid var(--dim2);margin-bottom:2px}
+.ptr-hdr{padding:10px 16px;background:var(--bg3);border-bottom:1px solid var(--dim);
+  font-size:8px;letter-spacing:3px;color:var(--mu2);text-transform:uppercase;
+  display:flex;justify-content:space-between;align-items:center}
+.ptr-body{padding:16px}
+.ptr-field{margin-bottom:12px}
+.ptr-key{font-size:7px;letter-spacing:3px;color:#8888aa;text-transform:uppercase;margin-bottom:4px}
+.ptr-val{font-size:12px;color:var(--tx);word-break:break-all;line-height:1.7}
+.ptr-val.big{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--g2)}
+.ptr-val.url{color:var(--cy)}
+.ptr-val.id{color:var(--gold);font-size:10px}
+.ptr-val.desc{color:var(--mu2);font-size:10px;line-height:1.9}
+.tag{display:inline-block;font-size:7px;letter-spacing:2px;padding:2px 8px;
+  border:1px solid var(--dim2);color:var(--mu2);margin:2px;text-transform:uppercase}
+.tag.ok{border-color:rgba(61,255,122,.3);color:var(--ok)}
+
+/* DB LIST */
+.db-item{background:var(--bg);border:1px solid var(--dim);padding:14px 16px;
+  margin-bottom:2px;cursor:pointer;transition:border-color .2s;
+  display:flex;align-items:center;justify-content:space-between}
+.db-item:hover{border-color:var(--gold)}
+.db-item-left .name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:var(--g2);margin-bottom:4px}
+.db-item-left .id{font-size:8px;color:var(--gold);letter-spacing:2px}
+.db-item-right{font-size:8px;color:var(--mu2);letter-spacing:1px;text-align:right}
+
+/* SCAN OVERLAY */
+.scan-wrap{position:relative;display:inline-block}
+.scan-overlay{position:absolute;top:0;left:0;pointer-events:none}
+
+/* LAYER GRID */
 .lay4{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;margin-bottom:2px}
 .lay{background:var(--bg);border:1px solid var(--dim);padding:12px 8px;text-align:center;cursor:pointer;transition:border-color .2s}
 .lay:hover{border-color:var(--g3)}
 .lay.on{border-color:var(--gold)}
 .ldot{width:12px;height:12px;border-radius:50%;margin:0 auto 6px}
 .ltit{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;margin-bottom:2px}
-.ldsc{font-size:8px;color:var(--mu);line-height:1.8}
-.ic{background:var(--bg);border:1px solid var(--g3);border-left:3px solid var(--gold);padding:14px 18px;font-size:10px;color:var(--mu);line-height:2.4;margin-bottom:2px}
-footer{text-align:center;padding:32px;font-size:8px;color:var(--mu);letter-spacing:3px;position:relative;z-index:1}
-@media(max-width:600px){.g2,.g3,.g4,.lay4{grid-template-columns:1fr 1fr}}
+.ldsc{font-size:8px;color:var(--mu2);line-height:1.8}
+
+.ic{background:var(--bg);border:1px solid var(--g3);border-left:3px solid var(--gold);
+  padding:14px 18px;font-size:10px;color:var(--mu2);line-height:2.4;margin-bottom:2px}
+
+footer{text-align:center;padding:32px;font-size:7px;color:var(--mu);
+  letter-spacing:3px;position:relative;z-index:1}
+
+/* DIVIDER */
+.div{height:1px;background:var(--dim);margin:12px 0}
+
+@media(max-width:640px){
+  .g2,.g3,.g4,.lay4{grid-template-columns:1fr 1fr}
+  nav{padding:0 16px}
+  .page{padding:20px 16px}
+}
 </style>
 </head>
 <body>
+
 <nav>
-  <div style="display:flex;align-items:center">
-    <span class="nb">UR-IP</span><span class="nv">v9 · SYKLUS</span>
+  <div class="nb">
+    <span class="logo">UR-IP</span>
+    <span class="ver">v10 · POINTER SYSTEM</span>
   </div>
   <div class="tabs">
-    <button class="tab on" onclick="go('enc',this)">Encode</button>
-    <button class="tab" onclick="go('dec',this)">Decode</button>
+    <button class="tab on" onclick="go('create',this)">Create</button>
+    <button class="tab" onclick="go('scan',this)">Scan</button>
+    <button class="tab" onclick="go('db',this)">Database</button>
     <button class="tab" onclick="go('abt',this)">Arsitektur</button>
   </div>
 </nav>
 
-<!-- ENCODE -->
-<div class="page on" id="pg-enc">
+<!-- ══════════════ CREATE ══════════════ -->
+<div class="page on" id="pg-create">
   <div class="g2">
-    <div>
-      <div class="card">
-        <div class="ch"><span class="ct">Input</span><span class="bx" id="enc-bx" style="color:var(--mu);border-color:var(--dim)">STANDARD</span></div>
-        <div class="cb">
-          <div class="row">
-            <input type="text" id="enc-in" value="SYKLUS" maxlength="37" oninput="onInput()">
-          </div>
-          <div class="row">
-            <select id="enc-mode" onchange="onInput()">
-              <option value="LITE">LITE — maks 13 karakter</option>
-              <option value="STANDARD" selected>STANDARD — maks 25 karakter</option>
-              <option value="DENSE">DENSE — maks 43 karakter</option>
-            </select>
-            <button class="btn p" onclick="doEnc()">Generate →</button>
-          </div>
-          <div id="enc-st" class="st nf">siap</div>
-        </div>
-      </div>
-      <div class="g4">
-        <div class="sv"><div class="sval" id="sc">0</div><div class="sk">Karakter</div></div>
-        <div class="sv"><div class="sval" id="sb">0</div><div class="sk">Bits</div></div>
-        <div class="sv"><div class="sval" id="sn">0</div><div class="sk">Nodes/Arm</div></div>
-        <div class="sv"><div class="sval">3</div><div class="sk">Spiral Arms</div></div>
-      </div>
-      <div class="card">
-        <div class="ch"><span class="ct">Bit Pattern · ARM 0</span></div>
-        <div class="cb" style="padding:12px 16px"><div id="bits" style="font-size:9px;line-height:2.2;word-break:break-all"></div></div>
-      </div>
-    </div>
+
+    <!-- LEFT: FORM -->
     <div>
       <div class="card">
         <div class="ch">
-          <span class="ct">Simbol UR-IP v9</span>
+          <span class="ct">Identitas Entitas</span>
+          <span class="bx" id="mode-bx" style="color:var(--mu2);border-color:var(--dim)">STANDARD</span>
+        </div>
+        <div class="cb">
+          <div class="field">
+            <div class="flabel">Nama / Label</div>
+            <input type="text" id="f-name" placeholder="e.g. Batik Solo #042" maxlength="25" oninput="onForm()">
+          </div>
+          <div class="field">
+            <div class="flabel">Tipe Entitas</div>
+            <select id="f-type" onchange="onForm()">
+              <option value="PRODUK">Produk / Barang</option>
+              <option value="PERSON">Identitas Personal</option>
+              <option value="LOKASI">Lokasi / Tempat</option>
+              <option value="KONTEN">Konten Digital</option>
+              <option value="ASET">Aset / Dokumen</option>
+              <option value="CUSTOM">Custom</option>
+            </select>
+          </div>
+          <div class="field">
+            <div class="flabel">Deskripsi</div>
+            <textarea id="f-desc" rows="3" placeholder="Deskripsi singkat..."></textarea>
+          </div>
+          <div class="field">
+            <div class="flabel">URL / Link Data</div>
+            <input type="url" id="f-url" placeholder="https://..." oninput="onForm()">
+          </div>
+          <div class="field">
+            <div class="flabel">Tags (pisah koma)</div>
+            <input type="text" id="f-tags" placeholder="handmade, solo, batik">
+          </div>
+          <div class="div"></div>
+          <div class="row">
+            <select id="enc-mode" style="flex:1" onchange="onForm()">
+              <option value="LITE">LITE — ID pendek (13 byte)</option>
+              <option value="STANDARD" selected>STANDARD — ID + meta (25 byte)</option>
+              <option value="DENSE">DENSE — full signature (43 byte)</option>
+            </select>
+            <button class="btn p" onclick="doCreate()">Generate UR-IP →</button>
+          </div>
+          <div id="create-st" class="st nf">isi form untuk generate</div>
+        </div>
+      </div>
+
+      <!-- STATS -->
+      <div class="g4">
+        <div class="sv"><div class="sval" id="st-id">—</div><div class="sk">ID Length</div></div>
+        <div class="sv"><div class="sval" id="st-nodes">—</div><div class="sk">Nodes/Arm</div></div>
+        <div class="sv"><div class="sval" id="st-type">—</div><div class="sk">Tipe</div></div>
+        <div class="sv"><div class="sval" id="st-db">0</div><div class="sk">Di Database</div></div>
+      </div>
+    </div>
+
+    <!-- RIGHT: CANVAS + RESULT -->
+    <div>
+      <div class="card">
+        <div class="ch">
+          <span class="ct">UR-IP Symbol</span>
           <span class="bx" id="sym-lbl" style="color:var(--gold);border-color:var(--g3)">—</span>
         </div>
-        <div class="cv" style="min-height:340px"><canvas id="cv-enc" width="320" height="320"></canvas></div>
+        <div class="cv" style="min-height:340px">
+          <canvas id="cv-create" width="320" height="320"></canvas>
+        </div>
       </div>
-      <a class="dl" id="dl-btn" onclick="prep(event)">↓ Download PNG</a>
+      <a class="dl" id="dl-btn" onclick="prepDl(event)">↓ Download PNG</a>
+
+      <!-- POINTER PREVIEW -->
+      <div class="ptr-section" id="ptr-preview" style="display:none">
+        <div class="ptr-hdr">
+          <span>Pointer Yang Tersimpan</span>
+          <span class="bx" style="color:var(--ok);border-color:rgba(61,255,122,.3)">SAVED</span>
+        </div>
+        <div class="ptr-body">
+          <div class="ptr-field">
+            <div class="ptr-key">UR-IP ID</div>
+            <div class="ptr-val id" id="ptr-id">—</div>
+          </div>
+          <div class="ptr-field">
+            <div class="ptr-key">Nama</div>
+            <div class="ptr-val big" id="ptr-name">—</div>
+          </div>
+          <div class="ptr-field">
+            <div class="ptr-key">Tipe · Waktu</div>
+            <div class="ptr-val" id="ptr-meta">—</div>
+          </div>
+        </div>
+      </div>
     </div>
+
   </div>
 </div>
 
-<!-- DECODE -->
-<div class="page" id="pg-dec">
+<!-- ══════════════ SCAN ══════════════ -->
+<div class="page" id="pg-scan">
   <div class="g2">
     <div>
       <div class="card">
@@ -132,39 +302,80 @@ footer{text-align:center;padding:32px;font-size:8px;color:var(--mu);letter-spaci
             ondragover="event.preventDefault();this.classList.add('hl')"
             ondragleave="this.classList.remove('hl')"
             ondrop="onDrop(event)">
-            <div style="font-size:32px;margin-bottom:10px;opacity:.3">◎</div>
-            <div style="font-size:10px;color:var(--mu);letter-spacing:2px">KLIK ATAU DROP PNG UR-IP</div>
+            <div class="drop-icon">◎</div>
+            <div class="drop-txt">Klik atau Drop PNG UR-IP</div>
           </div>
           <input type="file" id="fi" accept="image/*" style="display:none" onchange="onFile(event)">
         </div>
       </div>
-      <div id="dec-st" class="st nf">menunggu file...</div>
-      <div class="card" style="margin-top:2px">
-        <div class="ch"><span class="ct">Scan Overlay</span></div>
-        <div class="cv" style="min-height:160px"><canvas id="cv-scan" width="240" height="240"></canvas></div>
+      <div class="row" style="margin-bottom:2px">
+        <button class="btn full" id="cam-btn" onclick="toggleCam()">⬤ Buka Kamera Live</button>
+      </div>
+      <div class="card" id="cam-card" style="display:none">
+        <div class="ch">
+          <span class="ct">Kamera Live</span>
+          <button class="btn er" style="padding:4px 10px;font-size:8px" onclick="stopCam()">Stop</button>
+        </div>
+        <div class="cv" style="position:relative;padding:0;background:#000;min-height:240px">
+          <video id="cam-video" autoplay playsinline muted style="width:100%;max-width:320px;display:block;margin:0 auto"></video>
+          <canvas id="cv-cam-overlay" style="position:absolute;top:0;left:50%;transform:translateX(-50%);pointer-events:none"></canvas>
+        </div>
+        <div class="cb" style="padding:10px 16px">
+          <button class="btn p full" onclick="snapCam()">◎ Scan Sekarang</button>
+        </div>
+      </div>
+      <div id="scan-st" class="st nf">menunggu file atau kamera...</div>
+      <div class="card">
+        <div class="ch"><span class="ct">Preview + Scan</span></div>
+        <div class="cv"><canvas id="cv-scan" width="320" height="320"></canvas></div>
       </div>
     </div>
+
     <div>
+      <!-- DECODE RESULT -->
       <div class="card">
-        <div class="ch"><span class="ct">Preview</span></div>
-        <div class="cv" style="min-height:200px"><canvas id="cv-dec" width="280" height="280"></canvas></div>
-      </div>
-      <div class="card">
-        <div class="ch"><span class="ct">Hasil Decode</span></div>
+        <div class="ch"><span class="ct">Decoded ID</span></div>
         <div class="cb">
-          <div class="rval" id="dec-res">—</div>
-          <div class="rmeta" id="dec-meta">upload PNG untuk decode</div>
+          <div class="rval" id="scan-raw">—</div>
+          <div class="rmeta" id="scan-crc">upload PNG untuk scan</div>
+        </div>
+      </div>
+
+      <!-- POINTER RESOLVE -->
+      <div class="ptr-section" id="resolve-panel" style="display:none">
+        <div class="ptr-hdr">
+          <span>Data Terhubung</span>
+          <span class="bx" id="resolve-bx" style="color:var(--ok);border-color:rgba(61,255,122,.3)">RESOLVED</span>
+        </div>
+        <div class="ptr-body" id="resolve-body">—</div>
+      </div>
+
+      <div class="card" id="not-found-panel" style="display:none">
+        <div class="ch"><span class="ct">Tidak Ditemukan</span></div>
+        <div class="cb">
+          <div class="st er">ID tidak ada di database lokal.<br>Simbol valid tapi belum terdaftar.</div>
         </div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ARSITEKTUR -->
+<!-- ══════════════ DATABASE ══════════════ -->
+<div class="page" id="pg-db">
+  <div class="ch" style="margin-bottom:2px;background:var(--bg2);border:1px solid var(--dim2);padding:11px 18px;display:flex;align-items:center;justify-content:space-between">
+    <span class="ct">Database Lokal · <span id="db-count" style="color:var(--gold)">0</span> entri</span>
+    <button class="btn er" onclick="clearDB()">Hapus Semua</button>
+  </div>
+  <div id="db-list">
+    <div class="st nf" style="text-align:center;padding:32px">Belum ada entri. Buat UR-IP pertama kamu.</div>
+  </div>
+</div>
+
+<!-- ══════════════ ARSITEKTUR ══════════════ -->
 <div class="page" id="pg-abt">
   <div class="g2" style="margin-bottom:2px">
     <div class="card">
-      <div class="ch"><span class="ct">Simbol Lengkap</span><span class="bx" style="color:var(--gold);border-color:var(--g3)">v9</span></div>
+      <div class="ch"><span class="ct">Simbol Lengkap</span><span class="bx" style="color:var(--gold);border-color:var(--g3)">v10</span></div>
       <div class="cv"><canvas id="cv-a1" width="280" height="280"></canvas></div>
     </div>
     <div class="card">
@@ -178,91 +389,84 @@ footer{text-align:center;padding:32px;font-size:8px;color:var(--mu);letter-spaci
       <div class="ltit" style="color:var(--g2)">Semua</div><div class="ldsc">struktur lengkap</div>
     </div>
     <div class="lay" onclick="setLay('anchor',this)">
-      <div class="ldot" style="background:#fff;box-shadow:0 0 8px #fff6"></div>
-      <div class="ltit" style="color:#fff">ANCHOR</div><div class="ldsc">3-ring · 0°<br>referensi utama</div>
+      <div class="ldot" style="background:#fff;box-shadow:0 0 8px #fff5"></div>
+      <div class="ltit" style="color:#fff">ANCHOR</div><div class="ldsc">3-ring · 0°<br>referensi rotasi</div>
     </div>
     <div class="lay" onclick="setLay('finder',this)">
       <div class="ldot" style="background:var(--gold)"></div>
       <div class="ltit" style="color:var(--gold)">FINDER</div><div class="ldsc">2-ring · 120° 240°<br>triangulasi</div>
     </div>
     <div class="lay" onclick="setLay('orbit',this)">
-      <div class="ldot" style="background:var(--mu)"></div>
-      <div class="ltit">ORBIT RING</div><div class="ldsc">lingkaran reference<br>center langsung</div>
+      <div class="ldot" style="background:var(--mu2)"></div>
+      <div class="ltit">ORBIT RING</div><div class="ldsc">center langsung<br>zero ambiguity</div>
     </div>
   </div>
   <div class="lay4" style="margin-bottom:2px">
     <div class="lay" onclick="setLay('spiral',this)">
       <div class="ldot" style="background:var(--cy)"></div>
-      <div class="ltit" style="color:var(--cy)">SPIRAL</div><div class="ldsc">3 arm data<br>carrier wave</div>
+      <div class="ltit" style="color:var(--cy)">SPIRAL</div><div class="ldsc">3 arm · ID data<br>carrier wave</div>
     </div>
     <div class="lay" onclick="setLay('center',this)">
       <div class="ldot" style="background:var(--vi)"></div>
-      <div class="ltit" style="color:var(--vi)">PUSAT</div><div class="ldsc">ruang data<br>observer ada di sini</div>
+      <div class="ltit" style="color:var(--vi)">PUSAT</div><div class="ldsc">ruang informasi<br>observer di sini</div>
     </div>
-    <div class="lay" style="cursor:default;opacity:.4">
-      <div class="ldot" style="border:1px solid var(--dim)"></div>
-      <div class="ltit" style="color:var(--mu)">O kecil</div><div class="ldsc">LITE · 7 kar</div>
-    </div>
-    <div class="lay" style="cursor:default;opacity:.4">
-      <div class="ldot" style="border:1px solid var(--dim)"></div>
-      <div class="ltit" style="color:var(--mu)">O besar</div><div class="ldsc">DENSE · 37 kar</div>
-    </div>
+    <div class="lay" style="cursor:default;opacity:.35"><div class="ldot" style="border:1px solid var(--dim)"></div><div class="ltit" style="color:var(--mu2)">Pointer</div><div class="ldsc">ID → database<br>data unlimited</div></div>
+    <div class="lay" style="cursor:default;opacity:.35"><div class="ldot" style="border:1px solid var(--dim)"></div><div class="ltit" style="color:var(--mu2)">O Scale</div><div class="ldsc">semakin kompleks<br>O harus tumbuh</div></div>
   </div>
   <div class="ic" id="abt-info">
-    <strong style="color:var(--tx)">UR-IP v9</strong> — Orbit Ring Architecture.<br>
-    Orbit luar = referensi tetap. Spiral dalam = data berubah. Dua dimensi berbeda — tidak bisa saling salah baca.<br>
-    Semakin kompleks informasi, semakin besar O yang dibutuhkan untuk membacanya.
+    <strong style="color:var(--tx)">UR-IP v10 · Identity Pointer System</strong><br>
+    Simbol menyimpan ID kriptografik → ID resolve ke data unlimited di database.<br>
+    Bukan menyimpan data di simbol. Menyimpan <em style="color:var(--gold)">siapa</em>.
   </div>
-  <div style="margin-top:2px">
-    <div class="row">
-      <span style="font-size:9px;color:var(--mu);letter-spacing:2px">DEMO KATA:</span>
-      <button class="btn" onclick="setDemo('SYKLUS',this)">SYKLUS</button>
-      <button class="btn" onclick="setDemo('NOISE',this)">NOISE</button>
-      <button class="btn" onclick="setDemo('ORBIT',this)">ORBIT</button>
-      <button class="btn" onclick="setDemo('PANCER',this)">PANCER</button>
-      <button class="btn" onclick="setDemo('SPIRAL',this)">SPIRAL</button>
-      <button class="btn" onclick="setDemo('UR-IP',this)">UR-IP</button>
+  <div style="margin-top:8px">
+    <div style="font-size:8px;color:var(--mu2);letter-spacing:2px;margin-bottom:8px;text-transform:uppercase">Pointer Flow:</div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:9px;color:var(--mu2)">
+      <span style="padding:6px 12px;border:1px solid var(--dim2);color:var(--gold)">UR-IP Symbol</span>
+      <span>→</span>
+      <span style="padding:6px 12px;border:1px solid var(--dim2)">Decode ID</span>
+      <span>→</span>
+      <span style="padding:6px 12px;border:1px solid var(--dim2)">Resolve Database</span>
+      <span>→</span>
+      <span style="padding:6px 12px;border:1px solid rgba(61,255,122,.3);color:var(--ok)">Data Unlimited</span>
     </div>
   </div>
 </div>
 
-<footer>SYKLUS · 2026 · UR-IP v9 · auroradewa.Ad74@gmail.com</footer>
+<footer>SYKLUS · 2026 · UR-IP v10 · Identity Pointer System · auroradewa.Ad74@gmail.com</footer>
 
 <script>
 // ── GEOMETRY ────────────────────────────────────────────
-const ORBIT_R_RATIO = 0.47; // orbit ring radius / canvas size
-const DATA_MAX_RATIO= 0.37; // max spiral data radius / canvas size
-const ANCHOR_RINGS  = [16,11,6]; // 3-ring radii
-const FINDER_RINGS  = [11,6];    // 2-ring radii
-const CENTER_R      = 11;
-
+const OBR = 0.47, DMR = 0.37;
+const ANCHOR_R = [16,11,6];
+const FINDER_R = [11,6];
+const CTR = 11;
 const MODES = {
-  LITE:     {n:48,  max:13, tMin:.5, tMax:5.5*Math.PI,  a:.14, b:.108},
-  STANDARD: {n:80,  max:25, tMin:.5, tMax:7.5*Math.PI,  a:.13, b:.098},
-  DENSE:    {n:128, max:43, tMin:.5, tMax:10.5*Math.PI, a:.12, b:.090},
+  LITE:     {n:48, max:13, tMin:.5, tMax:5.5*Math.PI, a:.14, b:.108},
+  STANDARD: {n:80, max:25, tMin:.5, tMax:7.5*Math.PI, a:.13, b:.098},
+  DENSE:    {n:128,max:43, tMin:.5, tMax:10.5*Math.PI,a:.12, b:.090},
 };
 
 // ── CRC16 ───────────────────────────────────────────────
-function crc16(b){
-  let c=0xFFFF;
-  for(const x of b){c^=x<<8;for(let i=0;i<8;i++)c=(c&0x8000)?((c<<1)^0x1021)&0xFFFF:(c<<1)&0xFFFF;}
-  return c;
+function crc16(b){let c=0xFFFF;for(const x of b){c^=x<<8;for(let i=0;i<8;i++)c=(c&0x8000)?((c<<1)^0x1021)&0xFFFF:(c<<1)&0xFFFF;}return c;}
+
+// ── HASH (simple for ID generation) ────────────────────
+function hashStr(s){
+  let h=0x811c9dc5;
+  for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=(h*0x01000193)>>>0;}
+  return h.toString(16).padStart(8,'0').toUpperCase();
+}
+function genID(name,type,ts){
+  const raw=`${type}:${name}:${ts}`;
+  const h1=hashStr(raw);
+  const h2=hashStr(raw+h1);
+  const h3=hashStr(h1+h2);
+  return `${type.slice(0,3)}-${h1.slice(0,6)}-${h2.slice(0,6)}-${h3.slice(0,4)}`;
 }
 
-// ── SPIRAL ─────────────────────────────────────────────
-function spt(i,n,off,cx,cy,sc,m){
-  const t=m.tMin+(i/n)*(m.tMax-m.tMin),r=m.a*Math.exp(m.b*t)*sc;
-  return {x:cx+r*Math.cos(t+off),y:cy+r*Math.sin(t+off),r,t};
-}
-function nR(i,n,m,sc){
-  const t=m.tMin+(i/n)*(m.tMax-m.tMin),tN=m.tMin+((i+1)/n)*(m.tMax-m.tMin);
-  return Math.min(6,Math.max(2.5,m.a*Math.exp(m.b*t)*sc*(tN-t)*.32));
-}
-
-// ── ENCODE ─────────────────────────────────────────────
+// ── ENCODE/DECODE ───────────────────────────────────────
 function encode(text,mn){
   const m=MODES[mn],pl=new TextEncoder().encode(text);
-  if(pl.length>m.max) return {ok:false,err:`Maks ${m.max} karakter`};
+  if(pl.length>m.max) return {ok:false,err:`Maks ${m.max} char (${pl.length} diberikan)`};
   const mi={LITE:0,STANDARD:1,DENSE:2}[mn],crc=crc16(pl);
   const hdr=[0xAD,mi,pl.length,(crc>>8)&0xFF,crc&0xFF];
   const bytes=[...hdr,...pl],bits=[];
@@ -271,8 +475,6 @@ function encode(text,mn){
   for(let i=0;i<bits.length;i++){const a=i%3,p=Math.floor(i/3);if(p<m.n)arms[a][p]=bits[i];}
   return {ok:true,arms,mn,text,bits,total:bits.length};
 }
-
-// ── DECODE ARMS ─────────────────────────────────────────
 function decodeArms(arms,mn){
   const m=MODES[mn],n=m.n,bits=[];
   for(let p=0;p<n;p++) for(let a=0;a<3;a++) bits.push(arms[a][p]);
@@ -286,112 +488,167 @@ function decodeArms(arms,mn){
   return {ok,text,mn,len:bytes[2]};
 }
 
-// ── DRAW SYMBOL ─────────────────────────────────────────
+// ── SPIRAL DRAW ─────────────────────────────────────────
+function spt(i,n,off,cx,cy,sc,m){
+  const t=m.tMin+(i/n)*(m.tMax-m.tMin),r=m.a*Math.exp(m.b*t)*sc;
+  return {x:cx+r*Math.cos(t+off),y:cy+r*Math.sin(t+off),r,t};
+}
+function nR(i,n,m,sc){
+  const t=m.tMin+(i/n)*(m.tMax-m.tMin),tN=m.tMin+((i+1)/n)*(m.tMax-m.tMin);
+  return Math.min(6,Math.max(2.5,m.a*Math.exp(m.b*t)*sc*(tN-t)*.32));
+}
+
 function drawSymbol(cv,arms,mn,opts={}){
   const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
   const cx=W/2,cy=H/2,sc=Math.min(W,H)*.33;
   const m=MODES[mn]||MODES.STANDARD,n=m.n;
-  const oR=Math.min(W,H)*ORBIT_R_RATIO;
-  const layer=opts.layer||'all',aoff=opts.aoff||0;
-  const sA=layer==='all';
-  const shOrbit=sA||layer==='orbit'||layer==='anchor'||layer==='finder';
-  const shAnchor=sA||layer==='anchor';
-  const shFinder=sA||layer==='finder';
-  const shSpiral=sA||layer==='spiral';
-  const shCenter=sA||layer==='center';
+  const oR=Math.min(W,H)*OBR;
+  const L=opts.layer||'all',ao=opts.aoff||0;
+  const sA=L==='all';
+  const shO=sA||L==='orbit'||L==='anchor'||L==='finder';
+  const shA=sA||L==='anchor', shF=sA||L==='finder';
+  const shS=sA||L==='spiral', shC=sA||L==='center';
 
-  ctx.fillStyle='#04040a';ctx.fillRect(0,0,W,H);
+  ctx.fillStyle='#03030a';ctx.fillRect(0,0,W,H);
 
-  // ── ORBIT RING ──
-  if(shOrbit){
-    // Outer subtle ring
-    ctx.beginPath();ctx.arc(cx,cy,oR+6,0,Math.PI*2);
-    ctx.strokeStyle='#c8a84012';ctx.lineWidth=.8;ctx.stroke();
-    // Main orbit ring
+  if(shO){
+    ctx.beginPath();ctx.arc(cx,cy,oR+5,0,Math.PI*2);
+    ctx.strokeStyle='#c8a84010';ctx.lineWidth=.8;ctx.stroke();
     ctx.beginPath();ctx.arc(cx,cy,oR,0,Math.PI*2);
-    ctx.strokeStyle='#c8a84060';ctx.lineWidth=1.5;ctx.stroke();
-    // Inner subtle ring
+    ctx.strokeStyle='#c8a84058';ctx.lineWidth=1.5;ctx.stroke();
     ctx.beginPath();ctx.arc(cx,cy,oR-5,0,Math.PI*2);
-    ctx.strokeStyle='#c8a84018';ctx.lineWidth=.6;ctx.stroke();
+    ctx.strokeStyle='#c8a84015';ctx.lineWidth=.6;ctx.stroke();
   }
-
-  // ── DATA MAX RING ──
-  if(shSpiral){
-    ctx.beginPath();ctx.arc(cx,cy,Math.min(W,H)*DATA_MAX_RATIO,0,Math.PI*2);
-    ctx.strokeStyle='#47e8ff0c';ctx.lineWidth=.5;ctx.stroke();
-  }
-
-  // ── SPIRAL ARMS ──
-  if(shSpiral){
-    [aoff,aoff+2*Math.PI/3,aoff+4*Math.PI/3].forEach((off,ai)=>{
+  if(shS){
+    ctx.beginPath();ctx.arc(cx,cy,Math.min(W,H)*DMR,0,Math.PI*2);
+    ctx.strokeStyle='#3de8ff08';ctx.lineWidth=.5;ctx.stroke();
+    [ao,ao+2*Math.PI/3,ao+4*Math.PI/3].forEach((off,ai)=>{
       ctx.beginPath();
       for(let i=0;i<n;i++){const p=spt(i,n,off,cx,cy,sc,m);i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y);}
-      ctx.strokeStyle='#47e8ff0d';ctx.lineWidth=.7;ctx.stroke();
+      ctx.strokeStyle='#3de8ff0b';ctx.lineWidth=.7;ctx.stroke();
       if(!arms) return;
       for(let i=0;i<n;i++){
         if(arms[ai][i]!==1) continue;
         const p=spt(i,n,off,cx,cy,sc,m),r=nR(i,n,m,sc);
         ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);
-        ctx.fillStyle='#47e8ffcc';ctx.shadowColor='#47e8ff';ctx.shadowBlur=5;ctx.fill();ctx.shadowBlur=0;
+        ctx.fillStyle='#3de8ffcc';ctx.shadowColor='#3de8ff';ctx.shadowBlur=5;ctx.fill();ctx.shadowBlur=0;
       }
     });
   }
-
-  // ── FINDER @ 120°, 240° (2-ring) ──
-  if(shFinder){
+  if(shF){
     [2*Math.PI/3,4*Math.PI/3].forEach(off=>{
       const fx=cx+oR*Math.cos(off),fy=cy+oR*Math.sin(off);
-      if(sA||layer==='orbit'){
-        ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(fx,fy);
-        ctx.strokeStyle='#c8a84016';ctx.lineWidth=.5;ctx.setLineDash([2,8]);ctx.stroke();ctx.setLineDash([]);
-      }
-      // Dark background ring (important for ring pattern detection)
-      ctx.beginPath();ctx.arc(fx,fy,FINDER_RINGS[0]+4,0,Math.PI*2);
-      ctx.fillStyle='#04040a';ctx.fill();
-      // 2 rings
-      FINDER_RINGS.forEach((r,ri)=>{
+      ctx.beginPath();ctx.arc(fx,fy,FINDER_R[0]+5,0,Math.PI*2);ctx.fillStyle='#03030a';ctx.fill();
+      FINDER_R.forEach((r,ri)=>{
         ctx.beginPath();ctx.arc(fx,fy,r,0,Math.PI*2);
-        ctx.strokeStyle=ri===0?'#c8a84055':'#c8a840cc';ctx.lineWidth=1.5;ctx.stroke();
+        ctx.strokeStyle=ri===0?'#c8a84050':'#c8a840cc';ctx.lineWidth=1.5;ctx.stroke();
       });
-      // Core
       ctx.beginPath();ctx.arc(fx,fy,3,0,Math.PI*2);
-      ctx.fillStyle='#c8a840';ctx.shadowColor='#c8a840';ctx.shadowBlur=6;ctx.fill();ctx.shadowBlur=0;
+      ctx.fillStyle='#c8a840';ctx.shadowColor='#c8a840';ctx.shadowBlur=7;ctx.fill();ctx.shadowBlur=0;
     });
   }
-
-  // ── ANCHOR @ 0° (3-ring) ──
-  if(shAnchor){
-    const ax=cx+oR*Math.cos(aoff),ay=cy+oR*Math.sin(aoff);
-    if(sA||layer==='orbit'){
-      ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(ax,ay);
-      ctx.strokeStyle='#ffffff12';ctx.lineWidth=.5;ctx.setLineDash([2,8]);ctx.stroke();ctx.setLineDash([]);
-    }
-    // Dark background (ring isolation)
-    ctx.beginPath();ctx.arc(ax,ay,ANCHOR_RINGS[0]+4,0,Math.PI*2);
-    ctx.fillStyle='#04040a';ctx.fill();
-    // 3 rings
-    ANCHOR_RINGS.forEach((r,ri)=>{
+  if(shA){
+    const ax=cx+oR*Math.cos(ao),ay=cy+oR*Math.sin(ao);
+    ctx.beginPath();ctx.arc(ax,ay,ANCHOR_R[0]+5,0,Math.PI*2);ctx.fillStyle='#03030a';ctx.fill();
+    ANCHOR_R.forEach((r,ri)=>{
       ctx.beginPath();ctx.arc(ax,ay,r,0,Math.PI*2);
-      ctx.strokeStyle=['#ffffff22','#ffffff55','#ffffffaa'][ri];ctx.lineWidth=1.5;ctx.stroke();
+      ctx.strokeStyle=['#ffffff20','#ffffff50','#ffffffaa'][ri];ctx.lineWidth=1.5;ctx.stroke();
     });
-    // Core gradient
     const g=ctx.createRadialGradient(ax,ay,0,ax,ay,5);
     g.addColorStop(0,'#fff');g.addColorStop(1,'#ffe898');
     ctx.beginPath();ctx.arc(ax,ay,5,0,Math.PI*2);
     ctx.shadowColor='#fff';ctx.shadowBlur=16;ctx.fillStyle=g;ctx.fill();ctx.shadowBlur=0;
   }
-
-  // ── PUSAT ──
-  if(shCenter){
-    const pg=ctx.createRadialGradient(cx,cy,0,cx,cy,28);
-    pg.addColorStop(0,'#c0a0ff1e');pg.addColorStop(1,'transparent');
-    ctx.beginPath();ctx.arc(cx,cy,28,0,Math.PI*2);ctx.fillStyle=pg;ctx.fill();
-    const cg=ctx.createRadialGradient(cx,cy,0,cx,cy,CENTER_R);
-    cg.addColorStop(0,'#fff');cg.addColorStop(.4,'#c0a0ff');cg.addColorStop(1,'transparent');
-    ctx.beginPath();ctx.arc(cx,cy,CENTER_R,0,Math.PI*2);
-    ctx.shadowColor='#c0a0ff';ctx.shadowBlur=18;ctx.fillStyle=cg;ctx.fill();ctx.shadowBlur=0;
+  if(shC){
+    const pg=ctx.createRadialGradient(cx,cy,0,cx,cy,26);
+    pg.addColorStop(0,'#aa88ff1a');pg.addColorStop(1,'transparent');
+    ctx.beginPath();ctx.arc(cx,cy,26,0,Math.PI*2);ctx.fillStyle=pg;ctx.fill();
+    const cg=ctx.createRadialGradient(cx,cy,0,cx,cy,CTR);
+    cg.addColorStop(0,'#fff');cg.addColorStop(.4,'#aa88ff');cg.addColorStop(1,'transparent');
+    ctx.beginPath();ctx.arc(cx,cy,CTR,0,Math.PI*2);
+    ctx.shadowColor='#aa88ff';ctx.shadowBlur=18;ctx.fillStyle=cg;ctx.fill();ctx.shadowBlur=0;
   }
 }
+
+// ── LOCAL DATABASE ──────────────────────────────────────
+
+// ── CAMERA ──────────────────────────────────────────────
+let camStream=null, camAF=null, camActive=false;
+function toggleCam(){if(camActive)stopCam();else startCam();}
+function startCam(){
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){
+    document.getElementById('scan-st').className='st er';
+    document.getElementById('scan-st').textContent='Kamera tidak didukung — pakai HTTPS';return;
+  }
+  navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:'environment'},width:{ideal:640},height:{ideal:640}}})
+  .then(stream=>{
+    camStream=stream;camActive=true;
+    const vid=document.getElementById('cam-video');
+    vid.srcObject=stream;
+    document.getElementById('cam-card').style.display='block';
+    document.getElementById('cam-btn').textContent='Stop Kamera';
+    document.getElementById('cam-btn').style.borderColor='var(--er)';
+    document.getElementById('cam-btn').style.color='var(--er)';
+    document.getElementById('scan-st').className='st wn';
+    document.getElementById('scan-st').textContent='Kamera aktif — arahkan ke simbol, tekan Scan';
+    vid.onloadedmetadata=()=>camScanLoop();
+  }).catch(err=>{
+    document.getElementById('scan-st').className='st er';
+    document.getElementById('scan-st').textContent='Kamera ditolak: '+err.message;
+  });
+}
+function stopCam(){
+  if(camStream)camStream.getTracks().forEach(t=>t.stop());
+  camStream=null;camActive=false;
+  if(camAF)cancelAnimationFrame(camAF);camAF=null;
+  document.getElementById('cam-card').style.display='none';
+  const vid=document.getElementById('cam-video');vid.srcObject=null;
+  document.getElementById('cam-btn').textContent='Buka Kamera Live';
+  document.getElementById('cam-btn').style.borderColor='';
+  document.getElementById('cam-btn').style.color='';
+}
+function camScanLoop(){
+  if(!camActive){camAF=null;return;}
+  const ov=document.getElementById('cv-cam-overlay');
+  const vid=document.getElementById('cam-video');
+  if(vid.offsetWidth>0){
+    const s=Math.min(vid.offsetWidth,vid.offsetHeight,320);
+    ov.width=s;ov.height=s;
+    const o=ov.getContext('2d'),cx=s/2,cy=s/2,r=s*0.42;
+    o.clearRect(0,0,s,s);
+    o.beginPath();o.arc(cx,cy,r,0,Math.PI*2);
+    o.strokeStyle='rgba(200,168,64,0.5)';o.lineWidth=1.2;o.stroke();
+    const cs=16;
+    [[cx-r,cy-r,1,1],[cx+r,cy-r,-1,1],[cx-r,cy+r,1,-1],[cx+r,cy+r,-1,-1]].forEach(([x,y,dx,dy])=>{
+      o.beginPath();o.moveTo(x,y);o.lineTo(x+dx*cs,y);o.moveTo(x,y);o.lineTo(x,y+dy*cs);
+      o.strokeStyle='rgba(200,168,64,0.8)';o.lineWidth=1.5;o.stroke();
+    });
+  }
+  camAF=requestAnimationFrame(camScanLoop);
+}
+function snapCam(){
+  const vid=document.getElementById('cam-video');
+  if(!vid.videoWidth){
+    document.getElementById('scan-st').className='st er';
+    document.getElementById('scan-st').textContent='Kamera belum siap';return;
+  }
+  const cv=document.getElementById('cv-scan'),ctx=cv.getContext('2d');
+  const sz=Math.min(vid.videoWidth,vid.videoHeight);
+  const ox=(vid.videoWidth-sz)/2,oy=(vid.videoHeight-sz)/2;
+  cv.width=320;cv.height=320;
+  ctx.drawImage(vid,ox,oy,sz,sz,0,0,320,320);
+  document.getElementById('scan-st').className='st wn';
+  document.getElementById('scan-st').textContent='Memproses frame...';
+  setTimeout(()=>runScan(ctx,320,320),80);
+}
+
+function dbGet(){try{return JSON.parse(localStorage.getItem('urip_db')||'{}');}catch(e){return {};}}
+function dbSet(d){localStorage.setItem('urip_db',JSON.stringify(d));}
+function dbSave(id,entry){const d=dbGet();d[id]=entry;dbSet(d);}
+function dbFind(id){return dbGet()[id]||null;}
+function dbAll(){return Object.values(dbGet());}
+function dbCount(){return Object.keys(dbGet()).length;}
+function dbClear(){localStorage.removeItem('urip_db');}
 
 // ── NAV ─────────────────────────────────────────────────
 function go(id,el){
@@ -399,45 +656,66 @@ function go(id,el){
   document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
   document.getElementById('pg-'+id).classList.add('on');
   el.classList.add('on');
+  if(id==='db') renderDB();
   if(id==='abt') abtStart();
 }
 
-// ── ENCODE PAGE ─────────────────────────────────────────
-let lastEnc=null;
-function onInput(){
-  const txt=document.getElementById('enc-in').value,mn=document.getElementById('enc-mode').value;
+// ── CREATE PAGE ─────────────────────────────────────────
+let lastCreate=null;
+function onForm(){
+  const mn=document.getElementById('enc-mode').value;
   const m=MODES[mn];
-  document.getElementById('sc').textContent=txt.length;
-  document.getElementById('sn').textContent=m.n;
-  document.getElementById('enc-bx').textContent=mn;
-  const e=encode(txt,mn);
-  if(e.ok){
-    document.getElementById('sb').textContent=e.total;
-    const h=e.arms[0].slice(0,48).map(b=>`<span style="color:${b?'var(--g2)':'var(--mu)'}">${b}</span>`).join('');
-    document.getElementById('bits').innerHTML=`<span style="color:var(--mu);font-size:8px">ARM 0: </span>${h}<span style="color:var(--mu)"> …</span>`;
-    document.getElementById('enc-st').className='st ok';
-    document.getElementById('enc-st').textContent=`✓ "${txt}" → ${e.total} bits → ${m.n} nodes/arm`;
-  } else {
-    document.getElementById('enc-st').className='st er';
-    document.getElementById('enc-st').textContent='✗ '+e.err;
-    document.getElementById('bits').innerHTML='';
+  document.getElementById('mode-bx').textContent=mn;
+  document.getElementById('st-nodes').textContent=m.n;
+  document.getElementById('st-type').textContent=document.getElementById('f-type').value.slice(0,3);
+  document.getElementById('st-db').textContent=dbCount();
+}
+function doCreate(){
+  const name=document.getElementById('f-name').value.trim();
+  const type=document.getElementById('f-type').value;
+  const desc=document.getElementById('f-desc').value.trim();
+  const url=document.getElementById('f-url').value.trim();
+  const tags=document.getElementById('f-tags').value.trim();
+  const mn=document.getElementById('enc-mode').value;
+  if(!name){
+    document.getElementById('create-st').className='st er';
+    document.getElementById('create-st').textContent='✗ Nama wajib diisi';
+    return;
   }
+  const ts=Date.now();
+  const id=genID(name,type,ts);
+  // Encode ID into symbol
+  const enc=encode(id,mn);
+  if(!enc.ok){
+    document.getElementById('create-st').className='st er';
+    document.getElementById('create-st').textContent='✗ '+enc.err+' — ID: '+id;
+    return;
+  }
+  // Save to DB
+  const entry={id,name,type,desc,url,tags,mn,ts,created:new Date(ts).toLocaleString('id-ID')};
+  dbSave(id,entry);
+  lastCreate={enc,entry};
+  // Draw
+  drawSymbol(document.getElementById('cv-create'),enc.arms,mn);
+  document.getElementById('sym-lbl').textContent=name.slice(0,12);
+  document.getElementById('st-id').textContent=id.length;
+  document.getElementById('st-db').textContent=dbCount();
+  // Show pointer preview
+  document.getElementById('ptr-id').textContent=id;
+  document.getElementById('ptr-name').textContent=name;
+  document.getElementById('ptr-meta').textContent=type+' · '+entry.created;
+  document.getElementById('ptr-preview').style.display='block';
+  document.getElementById('create-st').className='st ok';
+  document.getElementById('create-st').textContent=`✓ UR-IP dibuat: "${name}" → ID: ${id}`;
 }
-function doEnc(){
-  const txt=document.getElementById('enc-in').value.trim(),mn=document.getElementById('enc-mode').value;
-  const e=encode(txt,mn);if(!e.ok)return;
-  lastEnc=e;
-  drawSymbol(document.getElementById('cv-enc'),e.arms,mn);
-  document.getElementById('sym-lbl').textContent=txt;
-}
-function prep(ev){
-  if(!lastEnc){ev.preventDefault();return;}
-  const cv=document.getElementById('cv-enc');
+function prepDl(ev){
+  if(!lastCreate){ev.preventDefault();return;}
+  const cv=document.getElementById('cv-create');
   document.getElementById('dl-btn').href=cv.toDataURL('image/png');
-  document.getElementById('dl-btn').download='urip_'+lastEnc.text.replace(/[^a-zA-Z0-9]/g,'_')+'.png';
+  document.getElementById('dl-btn').download='urip_'+lastCreate.entry.id+'.png';
 }
 
-// ── DECODE PAGE ─────────────────────────────────────────
+// ── SCAN PAGE ───────────────────────────────────────────
 function onDrop(e){
   e.preventDefault();document.getElementById('drop').classList.remove('hl');
   const f=e.dataTransfer.files[0];if(f)decFile(f);
@@ -448,16 +726,15 @@ function decFile(file){
   r.onload=ev=>{
     const img=new Image();
     img.onload=()=>{
-      const cv=document.getElementById('cv-dec'),ctx=cv.getContext('2d');
-      cv.width=280;cv.height=280;
-      ctx.drawImage(img,0,0,280,280);
-      runDec(ctx,280,280);
+      const cv=document.getElementById('cv-scan'),ctx=cv.getContext('2d');
+      cv.width=320;cv.height=320;
+      ctx.drawImage(img,0,0,320,320);
+      runScan(ctx,320,320);
     };
     img.src=ev.target.result;
   };
   r.readAsDataURL(file);
 }
-
 function smpA(d,W,H,px,py,rad){
   let s=0,c=0;const r=Math.max(2,Math.round(rad));
   for(let dy=-r;dy<=r;dy++) for(let dx=-r;dx<=r;dx++){
@@ -475,140 +752,155 @@ function otsu(d,W,H){
   for(let i=0;i<256;i++){wB+=h[i];if(!wB)continue;const wF=tot-wB;if(!wF)break;sB+=i*h[i];const v=wB*wF*(sB/wB-(s-sB)/wF)**2;if(v>mx){mx=v;t=i;}}
   return t;
 }
-
-// FIND ANCHOR — scan orbit ring for brightest 3-ring pattern
-function findAnchor(d,W,H){
-  const oR=Math.min(W,H)*ORBIT_R_RATIO;
-  const cx=W/2,cy=H/2;
-  let bestScore=-1,bestAngle=0;
-  // Scan 360° along orbit ring
-  for(let deg=0;deg<360;deg+=2){
-    const rad=deg*Math.PI/180;
-    const ax=cx+oR*Math.cos(rad),ay=cy+oR*Math.sin(rad);
-    // Score = brightness at core, dark gap, bright ring — 3-ring signature
-    const core=smpA(d,W,H,ax,ay,4);
-    const mid=smpA(d,W,H,ax+8,ay,2); // offset sample for ring gap
-    const outer=smpA(d,W,H,ax,ay,14)-smpA(d,W,H,ax,ay,8); // outer ring
-    const score=core+outer*0.5;
-    if(score>bestScore){bestScore=score;bestAngle=rad;}
-  }
-  return {angle:bestAngle, cx:cx+oR*Math.cos(bestAngle), cy:cy+oR*Math.sin(bestAngle), score:bestScore};
-}
-
-function runDec(ctx,W,H){
+function runScan(ctx,W,H){
   const d=ctx.getImageData(0,0,W,H).data;
   const th=otsu(d,W,H);
-  const cx=W/2,cy=H/2;
-  const sc=Math.min(W,H)*.33;
-
-  document.getElementById('dec-st').className='st wn';
-  document.getElementById('dec-st').textContent='⟳ scanning orbit ring...';
-
-  // Try to find anchor for rotation reference
-  const anchor=findAnchor(d,W,H);
-  const rotOffset=anchor.score>th*0.5 ? anchor.angle : 0;
-
-  // Draw scan overlay
-  const cvs=document.getElementById('cv-scan'),ctxs=cvs.getContext('2d');
-  cvs.width=240;cvs.height=240;
-  const sf=240/W;
-  ctxs.fillStyle='#04040a';ctxs.fillRect(0,0,240,240);
-  ctxs.drawImage(ctx.canvas,0,0,240,240);
-  // Show orbit ring
-  ctxs.beginPath();ctxs.arc(cx*sf,cy*sf,Math.min(W,H)*ORBIT_R_RATIO*sf,0,Math.PI*2);
-  ctxs.strokeStyle='#c8a84066';ctxs.lineWidth=1;ctxs.stroke();
-  // Show detected anchor
-  const axd=anchor.cx*sf,ayd=anchor.cy*sf;
-  ctxs.beginPath();ctxs.arc(axd,ayd,8,0,Math.PI*2);
-  ctxs.strokeStyle='#fff';ctxs.lineWidth=1.5;ctxs.stroke();
-  ctxs.font='7px IBM Plex Mono';ctxs.fillStyle='#ffffff88';ctxs.textAlign='center';
-  ctxs.fillText('ANCHOR',axd,ayd-12);
-
-  document.getElementById('dec-st').className='st wn';
-  document.getElementById('dec-st').textContent='⟳ decoding spiral...';
-
+  const cx=W/2,cy=H/2,sc=Math.min(W,H)*.33;
+  // Draw orbit ring overlay
+  ctx.beginPath();ctx.arc(cx,cy,Math.min(W,H)*OBR,0,Math.PI*2);
+  ctx.strokeStyle='rgba(200,168,64,.5)';ctx.lineWidth=1;ctx.stroke();
+  document.getElementById('scan-st').className='st wn';
+  document.getElementById('scan-st').textContent='⟳ scanning...';
   let found=null;
-  const scales=[sc,sc*.96,sc*1.04,sc*.92,sc*1.08];
-  const thresholds=[th,th*.75,th*.6,th*1.1];
-  const rotOffsets=[rotOffset,0,Math.PI/6,-Math.PI/6];
-
+  // Wide scale sweep — handles zoom, screenshot, resize
+  const scales=[sc, sc*.98, sc*1.02, sc*.95, sc*1.05, sc*.90, sc*1.10, sc*.85, sc*1.15, sc*.80, sc*1.20];
+  const ths=[th, th*.8, th*.65, th*.5, th*1.2, 80, 100, 120, 140];
   outer:
   for(const mn of ['LITE','STANDARD','DENSE']){
     const m=MODES[mn],n=m.n;
     for(const s of scales){
-      for(const t of thresholds){
-        for(const roff of rotOffsets){
-          const arms=[[],[],[]];
-          [roff,roff+2*Math.PI/3,roff+4*Math.PI/3].forEach((off,ai)=>{
-            for(let i=0;i<n;i++){
-              const p=spt(i,n,off,cx,cy,s,m),r=Math.max(2,nR(i,n,m,s)*.85);
-              arms[ai].push(smpA(d,W,H,p.x,p.y,r)>t?1:0);
-            }
-          });
-          const res=decodeArms(arms,mn);
-          if(res.ok){found=res;break outer;}
-        }
+      for(const t of ths){
+        const arms=[[],[],[]];
+        [0,2*Math.PI/3,4*Math.PI/3].forEach((off,ai)=>{
+          for(let i=0;i<n;i++){
+            const p=spt(i,n,off,cx,cy,s,m),r=Math.max(2,nR(i,n,m,s)*.85);
+            arms[ai].push(smpA(d,W,H,p.x,p.y,r)>t?1:0);
+          }
+        });
+        const res=decodeArms(arms,mn);
+        if(res.ok){found=res;break outer;}
       }
     }
   }
-
   if(found){
-    document.getElementById('dec-res').textContent=found.text;
-    document.getElementById('dec-meta').innerHTML=`<span style="color:var(--ok)">✓ CRC OK</span> · ${found.mn} · ${found.len} bytes`;
-    document.getElementById('dec-st').className='st ok';
-    document.getElementById('dec-st').textContent='✓ Decode berhasil';
-    // Mark successful arms on overlay
-    ctxs.font='7px IBM Plex Mono';ctxs.fillStyle='var(--ok)';ctxs.textAlign='center';
-    ctxs.fillText('✓ '+found.text,120,228);
+    document.getElementById('scan-raw').textContent=found.text.slice(0,20)+(found.text.length>20?'…':'');
+    document.getElementById('scan-crc').innerHTML=`<span style="color:var(--ok)">✓ CRC OK</span> · ${found.mn} · ${found.len} bytes`;
+    document.getElementById('scan-st').className='st ok';
+    document.getElementById('scan-st').textContent='✓ Decode berhasil → mencari di database...';
+    // Resolve pointer
+    setTimeout(()=>resolvePointer(found.text),400);
   } else {
-    document.getElementById('dec-res').textContent='—';
-    document.getElementById('dec-meta').textContent='tidak terbaca';
-    document.getElementById('dec-st').className='st er';
-    document.getElementById('dec-st').textContent='✗ Gagal — gunakan PNG yang di-download dari app ini';
+    document.getElementById('scan-raw').textContent='—';
+    document.getElementById('scan-crc').textContent='tidak terbaca';
+    document.getElementById('scan-st').className='st er';
+    document.getElementById('scan-st').textContent='✗ Gagal — gunakan PNG yang di-download dari app ini';
+    document.getElementById('resolve-panel').style.display='none';
+    document.getElementById('not-found-panel').style.display='none';
+  }
+}
+function resolvePointer(id){
+  const entry=dbFind(id);
+  if(entry){
+    document.getElementById('resolve-panel').style.display='block';
+    document.getElementById('not-found-panel').style.display='none';
+    const tags=entry.tags?entry.tags.split(',').map(t=>`<span class="tag ok">${t.trim()}</span>`).join(''):'';
+    document.getElementById('resolve-body').innerHTML=`
+      <div class="ptr-field"><div class="ptr-key">ID</div><div class="ptr-val id">${entry.id}</div></div>
+      <div class="ptr-field"><div class="ptr-key">Nama</div><div class="ptr-val big">${entry.name}</div></div>
+      <div class="ptr-field"><div class="ptr-key">Tipe · Dibuat</div><div class="ptr-val">${entry.type} · ${entry.created}</div></div>
+      ${entry.desc?`<div class="ptr-field"><div class="ptr-key">Deskripsi</div><div class="ptr-val desc">${entry.desc}</div></div>`:''}
+      ${entry.url?`<div class="ptr-field"><div class="ptr-key">URL</div><div class="ptr-val url"><a href="${entry.url}" target="_blank" style="color:var(--cy)">${entry.url}</a></div></div>`:''}
+      ${tags?`<div class="ptr-field"><div class="ptr-key">Tags</div><div class="ptr-val">${tags}</div></div>`:''}
+    `;
+    document.getElementById('scan-st').className='st ok';
+    document.getElementById('scan-st').textContent=`✓ Resolved: "${entry.name}"`;
+  } else {
+    document.getElementById('resolve-panel').style.display='none';
+    document.getElementById('not-found-panel').style.display='block';
+    document.getElementById('scan-st').className='st wn';
+    document.getElementById('scan-st').textContent='⚠ ID valid tapi tidak ada di database lokal';
   }
 }
 
+// ── DATABASE PAGE ───────────────────────────────────────
+function renderDB(){
+  const all=dbAll();
+  document.getElementById('db-count').textContent=all.length;
+  if(!all.length){
+    document.getElementById('db-list').innerHTML=`<div class="st nf" style="text-align:center;padding:32px">Belum ada entri. Buat UR-IP pertama kamu.</div>`;
+    return;
+  }
+  document.getElementById('db-list').innerHTML=all.sort((a,b)=>b.ts-a.ts).map(e=>`
+    <div class="db-item" onclick="viewEntry('${e.id}')">
+      <div class="db-item-left">
+        <div class="name">${e.name}</div>
+        <div class="id">${e.id}</div>
+      </div>
+      <div class="db-item-right">
+        <div>${e.type}</div>
+        <div style="margin-top:4px">${e.created}</div>
+      </div>
+    </div>
+  `).join('');
+}
+function viewEntry(id){
+  const e=dbFind(id);if(!e)return;
+  go('scan',document.querySelector('.tab:nth-child(2)'));
+  // Re-generate symbol for view
+  const enc=encode(e.id,e.mn);
+  if(enc.ok){
+    const cv=document.getElementById('cv-scan'),ctx=cv.getContext('2d');
+    cv.width=320;cv.height=320;
+    ctx.fillStyle='#03030a';ctx.fillRect(0,0,240,240);
+    drawSymbol(cv,enc.arms,e.mn);
+  }
+  document.getElementById('scan-raw').textContent=e.id.slice(0,20);
+  document.getElementById('scan-crc').innerHTML=`<span style="color:var(--ok)">✓ dari database</span> · ${e.mn}`;
+  document.getElementById('scan-st').className='st ok';
+  document.getElementById('scan-st').textContent=`✓ Viewing: "${e.name}"`;
+  resolvePointer(e.id);
+}
+function clearDB(){
+  if(!confirm('Hapus semua data?')) return;
+  dbClear();renderDB();
+  document.getElementById('st-db').textContent='0';
+}
+
 // ── ABOUT PAGE ──────────────────────────────────────────
-let abtLayer='all',abtAoff=0,abtAF=null;
-const abtTxt={
-  all:'<strong style="color:var(--tx)">UR-IP v9 · Orbit Ring Architecture</strong><br>Orbit luar = referensi tetap (Anchor + Finder). Spiral dalam = data. Pusat = ruang informasi.<br>Semakin kompleks informasi, semakin besar O yang dibutuhkan — bukan simbol yang disederhanakan.',
-  anchor:'<strong style="color:#fff">ANCHOR — 3-ring · 0°</strong><br>Paling besar, paling terang. Tidak bisa dikira data node atau finder.<br>Decoder cari ini pertama → dapat center, scale, rotasi referensi. Zero sweep.',
-  finder:'<strong style="color:var(--gold)">FINDER — 2-ring · 120° & 240°</strong><br>Konfirmasi triangulasi. Bersama Anchor → 3 titik = solved.<br>2-ring pattern tidak muncul di data spiral secara kebetulan.',
-  orbit:'<strong>ORBIT RING</strong><br>Lingkaran yang menghubungkan Anchor & Finder di radius konstan.<br>Decoder detect lingkaran ini → dapat center langsung tanpa hitung centroid.<br>Orbit bukan connector. Orbit adalah referensi itu sendiri.',
-  spiral:'<strong style="color:var(--cy)">SPIRAL — 3 arm data</strong><br>Carrier wave informasi. Selalu di orbit dalam (r≤0.37).<br>Tidak pernah menyentuh orbit Anchor/Finder. Dua dimensi berbeda.',
-  center:'<strong style="color:var(--vi)">PUSAT — Ruang Data</strong><br>Observer ada di sini. Bukan hiasan — ini titik dari mana semua spiral memancar.<br>Seperti inti atom, seperti pusat galaksi: energi tertinggi, paling stabil.',
+let aL='all',aO=0,aF=null;
+const aInfo={
+  all:'<strong style="color:var(--tx)">UR-IP v10 · Identity Pointer System</strong><br>Simbol menyimpan ID kriptografik unik → resolve ke data unlimited di database.<br>Bukan menyimpan konten. Menyimpan <em style="color:var(--gold)">identitas</em>.',
+  anchor:'<strong style="color:#fff">ANCHOR — 3-ring · 0°</strong><br>Decoder cari ini pertama. 3 ring pattern tidak mungkin muncul di data spiral.<br>Dapat center, scale, rotasi dalam satu langkah.',
+  finder:'<strong style="color:var(--gold)">FINDER — 2-ring · 120° & 240°</strong><br>2 ring = konfirmasi. Bersama anchor = triangulasi sempurna.<br>Zero sweep, zero ambiguity.',
+  orbit:'<strong>ORBIT RING</strong><br>Lingkaran yang hidup di radius konstan. Anchor & Finder ada di atasnya.<br>Detector cari lingkaran ini dulu → center langsung, akurat.',
+  spiral:'<strong style="color:var(--cy)">SPIRAL — 3 arm data</strong><br>ID kriptografik ter-encode di 3 arm interleave.<br>Orbit dalam (r≤0.37) — tidak pernah menyentuh orbit referensi.',
+  center:'<strong style="color:var(--vi)">PUSAT — Ruang Informasi</strong><br>Observer ada di sini. Semua spiral memancar dari pusat.<br>Seperti inti atom: energi tertinggi, paling stabil.',
 };
-let demoArms=(()=>{const e=encode('SYKLUS','STANDARD');return e.ok?e.arms:[[],[],[]]})();
+const dA=(()=>{const e=encode('PRD-A1B2C3-D4E5F6-G7H8','STANDARD');return e.ok?e.arms:[[],[],[]]})();
 function setLay(l,el){
-  abtLayer=l;
+  aL=l;
   document.querySelectorAll('.lay').forEach(e=>e.classList.remove('on'));
   if(el)el.classList.add('on');
   document.getElementById('abt-lbl').textContent={all:'Semua',anchor:'Anchor',finder:'Finder',orbit:'Orbit Ring',spiral:'Spiral',center:'Pusat'}[l]||l;
-  document.getElementById('abt-info').innerHTML=abtTxt[l]||'';
-  renderAbt();
+  document.getElementById('abt-info').innerHTML=aInfo[l]||'';
+  rA();
 }
-function setDemo(w,el){
-  document.querySelectorAll('#pg-abt .btn').forEach(b=>b.classList.remove('p'));
-  el.classList.add('p');
-  const e=encode(w,'STANDARD');if(e.ok)demoArms=e.arms;
-  renderAbt();
-}
-function renderAbt(){
+function rA(){
   const c1=document.getElementById('cv-a1'),c2=document.getElementById('cv-a2');
-  if(!c1||!c2) return;
-  drawSymbol(c1,demoArms,'STANDARD',{layer:'all',aoff:abtAoff});
-  drawSymbol(c2,demoArms,'STANDARD',{layer:abtLayer,aoff:abtAoff});
+  if(!c1||!c2)return;
+  drawSymbol(c1,dA,'STANDARD',{layer:'all',aoff:aO});
+  drawSymbol(c2,dA,'STANDARD',{layer:aL,aoff:aO});
 }
 function abtLoop(){
-  if(!document.getElementById('pg-abt').classList.contains('on')){abtAF=null;return;}
-  abtAoff+=.005;renderAbt();
-  abtAF=requestAnimationFrame(abtLoop);
+  if(!document.getElementById('pg-abt').classList.contains('on')){aF=null;return;}
+  aO+=.005;rA();aF=requestAnimationFrame(abtLoop);
 }
-function abtStart(){if(!abtAF)abtLoop();}
+function abtStart(){if(!aF)abtLoop();}
 
 // ── INIT ────────────────────────────────────────────────
-onInput();doEnc();
-setInterval(()=>{if(document.getElementById('pg-abt').classList.contains('on')&&!abtAF)abtStart();},300);
+onForm();
+drawSymbol(document.getElementById('cv-create'),null,'STANDARD');
+setInterval(()=>{if(document.getElementById('pg-abt').classList.contains('on')&&!aF)abtStart();},300);
 </script>
 </body>
 </html>
