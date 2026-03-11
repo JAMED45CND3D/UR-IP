@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>UR-IP v10 · Identity Pointer System</title>
+<title>UR-IP v11 · Resonance System 27005</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=IBM+Plex+Mono:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -180,7 +180,7 @@ footer{text-align:center;padding:32px;font-size:7px;color:var(--mu);
 <nav>
   <div class="nb">
     <span class="logo">UR-IP</span>
-    <span class="ver">v10 · POINTER SYSTEM</span>
+    <span class="ver">v11 · R27005</span>
   </div>
   <div class="tabs">
     <button class="tab on" onclick="go('create',this)">Create</button>
@@ -232,9 +232,9 @@ footer{text-align:center;padding:32px;font-size:7px;color:var(--mu);
           <div class="div"></div>
           <div class="row">
             <select id="enc-mode" style="flex:1" onchange="onForm()">
-              <option value="LITE">LITE — ID pendek (13 byte)</option>
-              <option value="STANDARD" selected>STANDARD — ID + meta (25 byte)</option>
-              <option value="DENSE">DENSE — full signature (43 byte)</option>
+              <option value="LITE">LITE — ID pendek (11 byte)</option>
+              <option value="STANDARD" selected>STANDARD — ID + meta (23 byte)</option>
+              <option value="DENSE">DENSE — full signature (41 byte)</option>
             </select>
             <button class="btn p" onclick="doCreate()">Generate UR-IP →</button>
           </div>
@@ -375,7 +375,7 @@ footer{text-align:center;padding:32px;font-size:7px;color:var(--mu);
 <div class="page" id="pg-abt">
   <div class="g2" style="margin-bottom:2px">
     <div class="card">
-      <div class="ch"><span class="ct">Simbol Lengkap</span><span class="bx" style="color:var(--gold);border-color:var(--g3)">v10</span></div>
+      <div class="ch"><span class="ct">Simbol Lengkap</span><span class="bx" style="color:var(--gold);border-color:var(--g3)">v11 · R27005</span></div>
       <div class="cv"><canvas id="cv-a1" width="280" height="280"></canvas></div>
     </div>
     <div class="card">
@@ -414,7 +414,25 @@ footer{text-align:center;padding:32px;font-size:7px;color:var(--mu);
     <div class="lay" style="cursor:default;opacity:.35"><div class="ldot" style="border:1px solid var(--dim)"></div><div class="ltit" style="color:var(--mu2)">O Scale</div><div class="ldsc">semakin kompleks<br>O harus tumbuh</div></div>
   </div>
   <div class="ic" id="abt-info">
-    <strong style="color:var(--tx)">UR-IP v10 · Identity Pointer System</strong><br>
+    <strong style="color:var(--tx)">UR-IP v11 · Resonance System 27005</strong><br>
+    <div style="margin-top:12px;display:grid;grid-template-columns:repeat(4,1fr);gap:2px">
+      <div style="background:var(--bg);padding:10px;text-align:center">
+        <div style="font-family:'Syne',sans-serif;font-size:16px;color:var(--gold);font-weight:800">0.9682</div>
+        <div style="font-size:7px;color:var(--mu2);letter-spacing:2px;margin-top:4px">C(ρ)</div>
+      </div>
+      <div style="background:var(--bg);padding:10px;text-align:center">
+        <div style="font-family:'Syne',sans-serif;font-size:16px;color:var(--gold);font-weight:800">1.667</div>
+        <div style="font-size:7px;color:var(--mu2);letter-spacing:2px;margin-top:4px">RASIO ≈ φ</div>
+      </div>
+      <div style="background:var(--bg);padding:10px;text-align:center">
+        <div style="font-family:'Syne',sans-serif;font-size:16px;color:var(--gold);font-weight:800">0x697D</div>
+        <div style="font-size:7px;color:var(--mu2);letter-spacing:2px;margin-top:4px">MARKER</div>
+      </div>
+      <div style="background:var(--bg);padding:10px;text-align:center">
+        <div style="font-family:'Syne',sans-serif;font-size:16px;color:var(--gold);font-weight:800">20</div>
+        <div style="font-size:7px;color:var(--mu2);letter-spacing:2px;margin-top:4px">XOR KEY</div>
+      </div>
+    </div>
     Simbol menyimpan ID kriptografik → ID resolve ke data unlimited di database.<br>
     Bukan menyimpan data di simbol. Menyimpan <em style="color:var(--gold)">siapa</em>.
   </div>
@@ -432,7 +450,7 @@ footer{text-align:center;padding:32px;font-size:7px;color:var(--mu);
   </div>
 </div>
 
-<footer>SYKLUS · 2026 · UR-IP v10 · Identity Pointer System · auroradewa.Ad74@gmail.com</footer>
+<footer>SYKLUS · 2026 · UR-IP v11 · Resonance 27005 · auroradewa.Ad74@gmail.com</footer>
 
 <script>
 // ── GEOMETRY ────────────────────────────────────────────
@@ -440,14 +458,29 @@ const OBR = 0.47, DMR = 0.37;
 const ANCHOR_R = [16,11,6];
 const FINDER_R = [11,6];
 const CTR = 11;
+
+// ── 27005 RESONANCE CONSTANT ────────────────────────────
+const R27005 = 27005;
+const R_BITS = R27005.toString(2).padStart(16,'0');
+const R_ONES = R_BITS.split('').filter(b=>b==='1').length;  // 10
+const R_ZEROS = 16 - R_ONES;                                 // 6
+const R_RATIO = R_ONES / R_ZEROS;                            // 1.6667 ≈ φ
+const R_A2 = R_ONES / 16;    // 0.625
+const R_B2 = R_ZEROS / 16;   // 0.375
+const R_C = 2 * Math.sqrt(R_A2) * Math.sqrt(R_B2);          // 0.9682 coherence
+const R_PDOM = Math.max(R_A2, R_B2);
+const R_S = Math.abs(R_C - R_PDOM);                         // 0.3432
+const R_XOR = 20;            // XOR halves — inner symmetry key
+const R_HEADER = [0x69, 0x7D]; // 27005 resonance marker bytes
+
 const MODES = {
-  LITE:     {n:48, max:13, tMin:.5, tMax:5.5*Math.PI, a:.14, b:.108},
-  STANDARD: {n:80, max:25, tMin:.5, tMax:7.5*Math.PI, a:.13, b:.098},
-  DENSE:    {n:128,max:43, tMin:.5, tMax:10.5*Math.PI,a:.12, b:.090},
+  LITE:     {n:48, max:11, tMin:.5, tMax:5.5*Math.PI,  a:.14*R_C,  b:.108*(R_RATIO/1.618)},
+  STANDARD: {n:80, max:23, tMin:.5, tMax:7.5*Math.PI,  a:.13*R_C,  b:.098*(R_RATIO/1.618)},
+  DENSE:    {n:128,max:41, tMin:.5, tMax:10.5*Math.PI, a:.12*R_C,  b:.090*(R_RATIO/1.618)},
 };
 
-// ── CRC16 ───────────────────────────────────────────────
-function crc16(b){let c=0xFFFF;for(const x of b){c^=x<<8;for(let i=0;i<8;i++)c=(c&0x8000)?((c<<1)^0x1021)&0xFFFF:(c<<1)&0xFFFF;}return c;}
+// ── CRC16 WITH 27005 INIT ───────────────────────────────
+function crc16(b){let c=R27005;for(const x of b){c^=x<<8;for(let i=0;i<8;i++)c=(c&0x8000)?((c<<1)^0x1021)&0xFFFF:(c<<1)&0xFFFF;}return c;}
 
 // ── HASH (simple for ID generation) ────────────────────
 function hashStr(s){
@@ -468,12 +501,13 @@ function encode(text,mn){
   const m=MODES[mn],pl=new TextEncoder().encode(text);
   if(pl.length>m.max) return {ok:false,err:`Maks ${m.max} char (${pl.length} diberikan)`};
   const mi={LITE:0,STANDARD:1,DENSE:2}[mn],crc=crc16(pl);
-  const hdr=[0xAD,mi,pl.length,(crc>>8)&0xFF,crc&0xFF];
+  // Header: magic(0xAD) + mode + len + crc(2) + R27005 marker(2)
+  const hdr=[0xAD,mi,pl.length,(crc>>8)&0xFF,crc&0xFF,...R_HEADER];
   const bytes=[...hdr,...pl],bits=[];
   for(const b of bytes) for(let i=7;i>=0;i--) bits.push((b>>i)&1);
   const arms=[new Array(m.n).fill(0),new Array(m.n).fill(0),new Array(m.n).fill(0)];
   for(let i=0;i<bits.length;i++){const a=i%3,p=Math.floor(i/3);if(p<m.n)arms[a][p]=bits[i];}
-  return {ok:true,arms,mn,text,bits,total:bits.length};
+  return {ok:true,arms,mn,text,bits,total:bits.length,resonance:R_C.toFixed(4)};
 }
 function decodeArms(arms,mn){
   const m=MODES[mn],n=m.n,bits=[];
@@ -481,11 +515,13 @@ function decodeArms(arms,mn){
   const bytes=[];
   for(let i=0;i+7<bits.length;i+=8){let b=0;for(let j=0;j<8;j++)b=(b<<1)|(bits[i+j]&1);bytes.push(b);}
   if(bytes[0]!==0xAD) return {ok:false};
-  const pl=bytes.slice(5,5+bytes[2]);
+  // Verify R27005 marker bytes at position 5,6
+  const hasMarker = bytes[5]===R_HEADER[0] && bytes[6]===R_HEADER[1];
+  const pl=bytes.slice(7,7+bytes[2]);
   if(pl.length<bytes[2]) return {ok:false};
   const ok=crc16(pl)===((bytes[3]<<8)|bytes[4]);
   let text='';try{text=new TextDecoder().decode(new Uint8Array(pl));}catch(e){}
-  return {ok,text,mn,len:bytes[2]};
+  return {ok,text,mn,len:bytes[2],resonant:hasMarker};
 }
 
 // ── SPIRAL DRAW ─────────────────────────────────────────
@@ -784,10 +820,12 @@ function runScan(ctx,W,H){
   }
   if(found){
     document.getElementById('scan-raw').textContent=found.text.slice(0,20)+(found.text.length>20?'…':'');
-    document.getElementById('scan-crc').innerHTML=`<span style="color:var(--ok)">✓ CRC OK</span> · ${found.mn} · ${found.len} bytes`;
+    const resTag=found.resonant
+      ?`<span style="color:var(--ok)">◎ RESONANT 27005</span>`
+      :`<span style="color:var(--wn)">⚠ non-resonant</span>`;
+    document.getElementById('scan-crc').innerHTML=`<span style="color:var(--ok)">✓ CRC OK</span> · ${found.mn} · ${found.len} bytes · ${resTag}`;
     document.getElementById('scan-st').className='st ok';
     document.getElementById('scan-st').textContent='✓ Decode berhasil → mencari di database...';
-    // Resolve pointer
     setTimeout(()=>resolvePointer(found.text),400);
   } else {
     document.getElementById('scan-raw').textContent='—';
@@ -869,7 +907,7 @@ function clearDB(){
 // ── ABOUT PAGE ──────────────────────────────────────────
 let aL='all',aO=0,aF=null;
 const aInfo={
-  all:'<strong style="color:var(--tx)">UR-IP v10 · Identity Pointer System</strong><br>Simbol menyimpan ID kriptografik unik → resolve ke data unlimited di database.<br>Bukan menyimpan konten. Menyimpan <em style="color:var(--gold)">identitas</em>.',
+  all:'<strong style="color:var(--tx)">UR-IP v11 · Resonance System 27005</strong><br>Konstanta 27005: C(ρ)=0.9682, rasio=1.667≈φ, XOR=20. Spiral di-kalibrasi dengan koherensi tertinggi. Header simbol mengandung marker resonansi 0x697D.',
   anchor:'<strong style="color:#fff">ANCHOR — 3-ring · 0°</strong><br>Decoder cari ini pertama. 3 ring pattern tidak mungkin muncul di data spiral.<br>Dapat center, scale, rotasi dalam satu langkah.',
   finder:'<strong style="color:var(--gold)">FINDER — 2-ring · 120° & 240°</strong><br>2 ring = konfirmasi. Bersama anchor = triangulasi sempurna.<br>Zero sweep, zero ambiguity.',
   orbit:'<strong>ORBIT RING</strong><br>Lingkaran yang hidup di radius konstan. Anchor & Finder ada di atasnya.<br>Detector cari lingkaran ini dulu → center langsung, akurat.',
@@ -897,8 +935,7 @@ function abtLoop(){
 }
 function abtStart(){if(!aF)abtLoop();}
 
-// ── INIT ────────────────────────────────────────────────
-onForm();
+// ── INIT ──────────────────────────────────────
 drawSymbol(document.getElementById('cv-create'),null,'STANDARD');
 setInterval(()=>{if(document.getElementById('pg-abt').classList.contains('on')&&!aF)abtStart();},300);
 </script>
