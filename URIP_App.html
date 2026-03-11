@@ -349,16 +349,26 @@ const URIP = (() => {
 
   // ── MODES ────────────────────────────────────────────────
   // overhead = 5B header + 6B RS parity = 11B
-  // capacity = nodesPerArm * 3 / 8 bytes
-  // nodesPerArm = ceil((maxBytes + 11) * 8 / 3), rounded up to multiple of 8
+  // nodesPerArm * 3 bits / 8 = total bytes capacity
   const MODES = {
-    LITE:     { nodesPerArm: 48,  maxBytes: 7,  tMin: 0.8, tMax: 4.2 * Math.PI, a: 0.18, b: 0.13 },
-    // 48*3=144 bits=18B capacity, 18-11=7B payload ✓
-    STANDARD: { nodesPerArm: 80,  maxBytes: 19, tMin: 0.8, tMax: 5.5 * Math.PI, a: 0.18, b: 0.13 },
-    // 80*3=240 bits=30B capacity, 30-11=19B payload ✓
-    DENSE:    { nodesPerArm: 128, maxBytes: 37, tMin: 0.8, tMax: 6.5 * Math.PI, a: 0.17, b: 0.12 },
-    // 128*3=384 bits=48B capacity, 48-11=37B payload ✓
+    LITE:     { nodesPerArm: 48,  maxBytes: 7,  tMin: 1.0, tMax: 7.0 * Math.PI, a: 0.14, b: 0.11 },
+    STANDARD: { nodesPerArm: 80,  maxBytes: 19, tMin: 1.0, tMax: 9.5 * Math.PI, a: 0.13, b: 0.10 },
+    DENSE:    { nodesPerArm: 128, maxBytes: 37, tMin: 1.0, tMax: 13.0 * Math.PI, a: 0.12, b: 0.095 },
   };
+
+  // Compute draw radius for a node at position i (so decode can match exactly)
+  function nodeDrawRadius(i, n, mode, scale) {
+    const { tMin, tMax, a, b } = mode;
+    const t = tMin + (i / n) * (tMax - tMin);
+    const tNext = tMin + ((i + 1) / n) * (tMax - tMin);
+    const r = a * Math.exp(b * t) * scale;
+    const rNext = a * Math.exp(b * tNext) * scale;
+    // Arc-length spacing to next node
+    const dt = tNext - t;
+    const spacing = r * dt; // approximate arc spacing
+    // Node draw radius = 35% of spacing, clamped 2.5..6
+    return Math.min(6, Math.max(2.5, spacing * 0.35));
+  }
 
   // ── THEMES ───────────────────────────────────────────────
   const THEMES = {
@@ -557,17 +567,15 @@ const URIP = (() => {
       }
       ctx.strokeStyle = clr.primary + '12'; ctx.lineWidth = 0.5; ctx.stroke();
 
-      // Data nodes:
-      // bit=1 → bright circle radius 6px  (clearly visible, easy to sample)
-      // bit=0 → NOT drawn  (background stays dark = 0)
+      // Data nodes: bit=1 → bright circle, bit=0 → not drawn
       for (let i = 0; i < n; i++) {
-        if (bits[i] !== 1) continue; // skip bit=0 entirely
+        if (bits[i] !== 1) continue;
         const p = spiralPoint(i, n, offset, cx, cy, scale, mode);
-        ctx.beginPath(); ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
+        const nr = nodeDrawRadius(i, n, mode, scale);
+        ctx.beginPath(); ctx.arc(p.x, p.y, nr, 0, Math.PI * 2);
         ctx.fillStyle = armColors[si];
         ctx.globalAlpha = 0.92;
-        ctx.shadowColor = clr.glow; ctx.shadowBlur = 4;
-        ctx.fill(); ctx.shadowBlur = 0; ctx.globalAlpha = 1;
+        ctx.fill(); ctx.globalAlpha = 1;
       }
 
       // Arm start marker (helps visual alignment, not used in decode)
@@ -612,7 +620,7 @@ const URIP = (() => {
     ctx.fillText('tulis teks · generate',cx,cy+60);
   }
 
-  return { VERSION, MODES, THEMES, encode, decode, draw, drawEmpty, spiralPoint,
+  return { VERSION, MODES, THEMES, encode, decode, draw, drawEmpty, spiralPoint, nodeDrawRadius,
     autoMode(text){ const b = enc.encode(text).length; if(b<=7)return'LITE'; if(b<=19)return'STANDARD'; return'DENSE'; }
   };
 })();
@@ -792,14 +800,13 @@ function tryDecodeTriskelion(imgData, W, H, cx, cy, scale, modeName, thresh, inv
   const offsets = [0, 2 * Math.PI / 3, 4 * Math.PI / 3];
   const arms = [[], [], []];
 
-  // Node radius in draw = 6px at scale=145 (440px canvas)
-  // So relative node radius = 6 / 145 = 0.041 of scale
-  const NODE_R_RATIO = 0.041;
-  const sampleR = Math.max(3, scale * NODE_R_RATIO * 0.8);
-
   offsets.forEach((offset, si) => {
     for (let i = 0; i < n; i++) {
       const p = URIP.spiralPoint(i, n, offset, cx, cy, scale, mode);
+      // Use EXACT same radius formula as draw
+      const drawR = URIP.nodeDrawRadius(i, n, mode, scale);
+      // Sample at 80% of draw radius — inside the node, not the edge
+      const sampleR = Math.max(1.5, drawR * 0.8);
       let brightness = sampleArea(imgData, W, H, p.x, p.y, sampleR);
       let bit = brightness > thresh ? 1 : 0; // bright = node present = 1
       if (invert) bit = 1 - bit;
