@@ -3,1167 +3,612 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>UR-IP · Triskelion v6</title>
+<title>UR-IP v9 · SYKLUS</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=IBM+Plex+Mono:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg:#04040a;--s1:#08080f;--s2:#0d0d18;--b1:#121224;--b2:#1a1a32;
-  --gold:#c8a840;--gold2:#ffe898;--gold3:#6a5020;
-  --text:#e0dfc8;--muted:#48486a;--muted2:#2a2a44;
-  --ok:#47ff8a;--err:#ff476a;--warn:#ffbb47;
-}
+:root{--bg:#04040a;--bg2:#08080f;--dim:#121224;--gold:#c8a840;--g2:#ffe898;--g3:#3a2010;--tx:#e0dfc8;--mu:#48486a;--ok:#47ff8a;--er:#ff476a;--wn:#ffbb47;--cy:#47e8ff;--vi:#c0a0ff}
 *{margin:0;padding:0;box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--text);font-family:'IBM Plex Mono',monospace;min-height:100vh;overflow-x:hidden}
-body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(200,168,64,0.018) 1px,transparent 1px),linear-gradient(90deg,rgba(200,168,64,0.018) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;z-index:0}
-
-/* NAV */
-.nav{position:sticky;top:0;z-index:100;background:rgba(4,4,10,0.95);backdrop-filter:blur(16px);border-bottom:1px solid var(--b1);display:flex;align-items:center;justify-content:space-between;padding:0 24px;height:52px}
-.nav-brand{font-family:'Syne',sans-serif;font-size:16px;font-weight:800;letter-spacing:2px;color:var(--gold)}
-.nav-tabs{display:flex;gap:0}
-.nav-tab{padding:0 20px;height:52px;display:flex;align-items:center;font-size:10px;letter-spacing:3px;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all 0.2s;text-transform:uppercase;background:none;border-top:none;border-left:none;border-right:none;font-family:'IBM Plex Mono',monospace}
-.nav-tab:hover{color:var(--text)}
-.nav-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
-.nav-ver{font-size:9px;color:var(--muted);letter-spacing:2px}
-
-/* PAGES */
-.page{display:none;position:relative;z-index:1;min-height:calc(100vh - 52px)}
-.page.active{display:block}
-
-/* ══ GENERATOR ══ */
-.gen-layout{display:grid;grid-template-columns:340px 1fr;gap:2px;max-width:1000px;margin:32px auto;padding:0 24px}
-.panel{background:var(--s1);border:1px solid var(--b1)}
-.panel-hdr{padding:14px 20px;border-bottom:1px solid var(--b1);display:flex;align-items:center;gap:8px}
-.phd{width:5px;height:5px;border-radius:50%;background:var(--gold)}
-.pht{font-size:9px;letter-spacing:3px;color:var(--gold);text-transform:uppercase}
-.panel-body{padding:20px}
-.lbl{font-size:9px;letter-spacing:2px;color:var(--muted);margin-bottom:7px;display:block;text-transform:uppercase}
-textarea,input[type=text]{width:100%;background:var(--s2);border:1px solid var(--b2);border-left:2px solid var(--gold3);color:var(--text);font-family:'IBM Plex Mono',monospace;font-size:12px;padding:12px;outline:none;transition:all 0.25s;line-height:1.7}
-textarea{resize:vertical;min-height:72px}
-textarea:focus,input[type=text]:focus{border-color:var(--gold);box-shadow:0 0 16px rgba(200,168,64,0.12)}
-textarea::placeholder,input::placeholder{color:var(--muted)}
-.inp-group{margin-bottom:16px}
-
-/* MODE */
-.mode-row{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;margin-bottom:16px}
-.mbtn{padding:10px 4px;background:var(--s2);border:1px solid var(--b2);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:1px;cursor:pointer;transition:all 0.2s;text-align:center}
-.mbtn:hover{border-color:var(--gold3);color:var(--text)}
-.mbtn.active{background:rgba(200,168,64,0.08);border-color:var(--gold);color:var(--gold)}
-.mbtn span{display:block;font-family:'Syne',sans-serif;font-size:11px;font-weight:700;margin-bottom:2px}
-
-/* THEME */
-.theme-row{display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap}
-.tdot{width:24px;height:24px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all 0.2s}
-.tdot.active{border-color:#fff;transform:scale(1.2)}
-
-/* TOGGLE */
-.tog-row{display:flex;align-items:center;gap:10px;margin-bottom:16px}
-.tog{width:34px;height:18px;background:var(--b2);border-radius:9px;cursor:pointer;position:relative;border:1px solid var(--b1);transition:background 0.3s;flex-shrink:0}
-.tog.on{background:var(--gold3)}
-.tok{position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:var(--muted);transition:all 0.3s}
-.tog.on .tok{left:18px;background:var(--gold)}
-.tog-lbl{font-size:10px;color:var(--muted);letter-spacing:2px;text-transform:uppercase}
-
-/* BTN */
-.gbtn{width:100%;padding:14px;background:var(--gold);color:#000;border:none;font-family:'Syne',sans-serif;font-size:12px;font-weight:800;letter-spacing:4px;text-transform:uppercase;cursor:pointer;transition:all 0.2s;margin-bottom:2px}
-.gbtn:hover{opacity:0.88;transform:translateY(-1px)}
-.gbtn:active{transform:translateY(0)}
-.gbtn.secondary{background:transparent;color:var(--gold);border:1px solid var(--gold3)}
-.gbtn.secondary:hover{border-color:var(--gold);background:rgba(200,168,64,0.06)}
-
-/* CANVAS PANEL */
-.canvas-panel{background:var(--s1);border:1px solid var(--b1);display:flex;flex-direction:column}
-.canvas-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:28px;min-height:440px;position:relative}
-canvas{display:block;max-width:100%}
-.canvas-footer{padding:14px 20px;border-top:1px solid var(--b1);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
-.cf-formula{font-size:10px;color:var(--gold);letter-spacing:1px}
-.dl-btn{padding:7px 14px;background:transparent;color:var(--gold);border:1px solid var(--gold3);font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;cursor:pointer;transition:all 0.2s;text-transform:uppercase}
-.dl-btn:hover{background:rgba(200,168,64,0.1);border-color:var(--gold)}
-
-/* DECODE STRIP */
-.decode-strip{max-width:1000px;margin:2px auto;padding:0 24px}
-.decode-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px}
-.decode-out{background:var(--s2);border:1px solid var(--b2);border-left:2px solid var(--gold3);padding:14px;font-size:12px;color:var(--text);line-height:1.8;min-height:56px}
-.decode-meta{font-size:11px;color:var(--muted);line-height:2.2;padding:4px 0}
-
-/* STATS */
-.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;max-width:1000px;margin:2px auto;padding:0 24px 32px}
-.stat{background:var(--s1);border:1px solid var(--b1);padding:12px;text-align:center}
-.sn{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--gold)}
-.sl{font-size:9px;color:var(--muted);letter-spacing:1px;margin-top:2px}
-
-/* ══ SCANNER ══ */
-.scan-layout{max-width:800px;margin:32px auto;padding:0 24px}
-.scan-panel{background:var(--s1);border:1px solid var(--b1);margin-bottom:2px}
-.scan-video-wrap{position:relative;background:#000;aspect-ratio:1;overflow:hidden}
-#scan-video{width:100%;height:100%;object-fit:cover}
-.scan-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none}
-.scan-reticle{width:60%;aspect-ratio:1;border:1px solid rgba(200,168,64,0.5);border-radius:50%;animation:pulse-ring 2s ease infinite}
-.scan-crosshair{position:absolute;width:2px;height:40%;background:rgba(200,168,64,0.2);top:50%;left:50%;transform:translate(-50%,-50%)}
-.scan-crosshairH{position:absolute;height:2px;width:40%;background:rgba(200,168,64,0.2);top:50%;left:50%;transform:translate(-50%,-50%)}
-.scan-center{position:absolute;width:10px;height:10px;border-radius:50%;background:var(--gold);box-shadow:0 0 16px var(--gold);top:50%;left:50%;transform:translate(-50%,-50%)}
-@keyframes pulse-ring{0%,100%{opacity:0.4}50%{opacity:0.9}}
-.scan-controls{padding:16px 20px;display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--b1)}
-.scan-result{padding:20px;border-top:1px solid var(--b1)}
-.sr-text{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;color:var(--gold);margin-bottom:8px;word-break:break-all}
-.sr-meta{font-size:10px;color:var(--muted);letter-spacing:2px;line-height:2}
-
-/* UPLOAD ZONE */
-.uzone{border:1px dashed var(--gold3);padding:28px;text-align:center;cursor:pointer;transition:all 0.2s;margin:16px 20px}
-.uzone:hover{border-color:var(--gold);background:rgba(200,168,64,0.04)}
-.uzone-lbl{font-size:10px;letter-spacing:3px;color:var(--muted);text-transform:uppercase}
-.uzone-hint{font-size:9px;color:var(--muted2);margin-top:4px;letter-spacing:2px}
-
-/* MANUAL */
-.manual-section{padding:20px}
-
-/* ABOUT */
-.about-section{max-width:700px;margin:32px auto;padding:0 24px 48px}
-.ab-card{background:var(--s1);border:1px solid var(--b1);padding:24px;margin-bottom:2px}
-.ab-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:var(--gold);letter-spacing:2px;margin-bottom:10px;text-transform:uppercase}
-.ab-body{font-size:11px;color:var(--muted);line-height:2;letter-spacing:1px}
-.ab-code{background:var(--s2);border:1px solid var(--b2);padding:16px;font-size:11px;line-height:1.8;margin-top:10px;overflow-x:auto}
-.k{color:var(--gold)}.s{color:var(--ok)}.c{color:var(--muted)}
-
-@media(max-width:700px){
-  .gen-layout{grid-template-columns:1fr}
-  .decode-grid{grid-template-columns:1fr}
-  .stats-row{grid-template-columns:repeat(2,1fr)}
-  .nav-tabs .nav-tab{padding:0 12px;font-size:9px;letter-spacing:2px}
-}
+body{background:var(--bg);color:var(--tx);font-family:'IBM Plex Mono',monospace;min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 40% at 50% 0%,rgba(200,168,64,.05),transparent 70%);pointer-events:none}
+nav{position:sticky;top:0;z-index:100;background:rgba(4,4,10,.96);border-bottom:1px solid var(--dim);display:flex;align-items:center;justify-content:space-between;padding:0 20px;height:44px;backdrop-filter:blur(10px)}
+.nb{font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:var(--g2);letter-spacing:3px}
+.nv{font-size:8px;color:var(--mu);letter-spacing:2px;margin-left:8px}
+.tabs{display:flex}
+.tab{padding:0 16px;height:44px;display:flex;align-items:center;font-size:9px;letter-spacing:2px;color:var(--mu);cursor:pointer;border-bottom:2px solid transparent;text-transform:uppercase;transition:all .2s;background:none;border-top:none;border-left:none;border-right:none;font-family:'IBM Plex Mono',monospace}
+.tab:hover{color:var(--tx)}
+.tab.on{color:var(--gold);border-bottom-color:var(--gold)}
+.page{display:none;max-width:960px;margin:0 auto;padding:24px 20px;position:relative;z-index:1}
+.page.on{display:block}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-bottom:2px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:2px;margin-bottom:2px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;margin-bottom:2px}
+.card{background:var(--bg2);border:1px solid var(--dim);margin-bottom:2px}
+.ch{padding:10px 16px;border-bottom:1px solid var(--dim);display:flex;align-items:center;justify-content:space-between}
+.ct{font-size:9px;letter-spacing:3px;color:var(--mu);text-transform:uppercase}
+.cb{padding:16px}
+.cv{display:flex;align-items:center;justify-content:center;padding:20px;background:var(--bg)}
+canvas{display:block}
+.bx{font-size:8px;letter-spacing:2px;padding:3px 9px;border:1px solid}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+input[type=text]{flex:1;min-width:100px;padding:9px 14px;background:var(--bg);border:1px solid var(--dim);color:var(--tx);font-family:'IBM Plex Mono',monospace;font-size:13px;outline:none;transition:border-color .2s}
+input[type=text]:focus{border-color:var(--gold)}
+select{padding:9px 14px;background:var(--bg);border:1px solid var(--dim);color:var(--tx);font-family:'IBM Plex Mono',monospace;font-size:9px;outline:none;cursor:pointer}
+.btn{padding:9px 18px;background:transparent;border:1px solid var(--dim);color:var(--mu);font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:2px;cursor:pointer;transition:all .2s;text-transform:uppercase}
+.btn:hover{border-color:var(--g3);color:var(--tx)}
+.btn.p{border-color:var(--gold);color:var(--gold);background:rgba(200,168,64,.06)}
+.btn.p:hover{background:rgba(200,168,64,.12)}
+.st{padding:10px 14px;font-size:9px;letter-spacing:1px;border:1px solid var(--dim);margin-bottom:2px}
+.st.ok{color:var(--ok);border-color:rgba(71,255,138,.2)}
+.st.er{color:var(--er);border-color:rgba(255,71,106,.2)}
+.st.wn{color:var(--wn);border-color:rgba(255,187,71,.2)}
+.st.nf{color:var(--mu);border-color:var(--dim)}
+.sv{background:var(--bg);border:1px solid var(--dim);padding:14px;text-align:center}
+.sval{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--gold);margin-bottom:4px}
+.sk{font-size:8px;letter-spacing:2px;color:var(--mu);text-transform:uppercase}
+.drop{border:1px dashed var(--dim);padding:32px;text-align:center;cursor:pointer;transition:all .2s}
+.drop:hover,.drop.hl{border-color:var(--gold);background:rgba(200,168,64,.03)}
+.rval{font-family:'Syne',sans-serif;font-size:36px;font-weight:800;color:var(--g2);letter-spacing:3px;text-align:center;padding:24px 0}
+.rmeta{font-size:9px;color:var(--mu);letter-spacing:2px;text-align:center;padding-bottom:8px}
+.dl{display:block;width:100%;padding:12px;text-align:center;background:rgba(200,168,64,.06);border:1px solid var(--gold);color:var(--gold);font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:3px;cursor:pointer;text-decoration:none;text-transform:uppercase;transition:all .2s;margin-bottom:2px}
+.dl:hover{background:rgba(200,168,64,.14)}
+.lay4{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;margin-bottom:2px}
+.lay{background:var(--bg);border:1px solid var(--dim);padding:12px 8px;text-align:center;cursor:pointer;transition:border-color .2s}
+.lay:hover{border-color:var(--g3)}
+.lay.on{border-color:var(--gold)}
+.ldot{width:12px;height:12px;border-radius:50%;margin:0 auto 6px}
+.ltit{font-family:'Syne',sans-serif;font-size:10px;font-weight:700;margin-bottom:2px}
+.ldsc{font-size:8px;color:var(--mu);line-height:1.8}
+.ic{background:var(--bg);border:1px solid var(--g3);border-left:3px solid var(--gold);padding:14px 18px;font-size:10px;color:var(--mu);line-height:2.4;margin-bottom:2px}
+footer{text-align:center;padding:32px;font-size:8px;color:var(--mu);letter-spacing:3px;position:relative;z-index:1}
+@media(max-width:600px){.g2,.g3,.g4,.lay4{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
-
-<nav class="nav">
-  <div class="nav-brand">✦ UR-IP</div>
-  <div class="nav-tabs">
-    <button class="nav-tab active" onclick="showPage('gen',this)">Generator</button>
-    <button class="nav-tab" onclick="showPage('scan',this)">Scanner</button>
-    <button class="nav-tab" onclick="showPage('about',this)">API</button>
+<nav>
+  <div style="display:flex;align-items:center">
+    <span class="nb">UR-IP</span><span class="nv">v9 · SYKLUS</span>
   </div>
-  <div class="nav-ver">TQR v6</div>
+  <div class="tabs">
+    <button class="tab on" onclick="go('enc',this)">Encode</button>
+    <button class="tab" onclick="go('dec',this)">Decode</button>
+    <button class="tab" onclick="go('abt',this)">Arsitektur</button>
+  </div>
 </nav>
 
-<!-- ══ GENERATOR PAGE ══ -->
-<div class="page active" id="page-gen">
-  <div class="gen-layout">
-    <div class="panel">
-      <div class="panel-hdr"><div class="phd"></div><div class="pht">Input</div></div>
-      <div class="panel-body">
-        <div class="inp-group">
-          <span class="lbl">Teks atau Data</span>
-          <textarea id="gen-input" rows="4" placeholder="Masukkan teks...&#10;(Ctrl+Enter untuk generate)"></textarea>
+<!-- ENCODE -->
+<div class="page on" id="pg-enc">
+  <div class="g2">
+    <div>
+      <div class="card">
+        <div class="ch"><span class="ct">Input</span><span class="bx" id="enc-bx" style="color:var(--mu);border-color:var(--dim)">STANDARD</span></div>
+        <div class="cb">
+          <div class="row">
+            <input type="text" id="enc-in" value="SYKLUS" maxlength="37" oninput="onInput()">
+          </div>
+          <div class="row">
+            <select id="enc-mode" onchange="onInput()">
+              <option value="LITE">LITE — maks 13 karakter</option>
+              <option value="STANDARD" selected>STANDARD — maks 25 karakter</option>
+              <option value="DENSE">DENSE — maks 43 karakter</option>
+            </select>
+            <button class="btn p" onclick="doEnc()">Generate →</button>
+          </div>
+          <div id="enc-st" class="st nf">siap</div>
         </div>
-
-        <span class="lbl">Mode Kapasitas</span>
-        <div class="mode-row" id="mode-row">
-          <button class="mbtn active" onclick="setMode('LITE',this)"><span>LITE</span>≤7 chars</button>
-          <button class="mbtn" onclick="setMode('STANDARD',this)"><span>STD</span>≤19 chars</button>
-          <button class="mbtn" onclick="setMode('DENSE',this)"><span>DENSE</span>≤37 chars</button>
-        </div>
-
-        <span class="lbl">Tema</span>
-        <div class="theme-row">
-          <div class="tdot active" style="background:#c8a840" onclick="setTheme('gold',this)" title="Gold"></div>
-          <div class="tdot" style="background:#47ff8a" onclick="setTheme('cyan',this)" title="Cyan"></div>
-          <div class="tdot" style="background:#ff476a" onclick="setTheme('red',this)" title="Red"></div>
-          <div class="tdot" style="background:#a0a0ff" onclick="setTheme('blue',this)" title="Blue"></div>
-          <div class="tdot" style="background:#ffffff" onclick="setTheme('white',this)" title="White"></div>
-        </div>
-
-        <div class="tog-row">
-          <div class="tog on" id="tog-anim" onclick="toggleAnim(this)"><div class="tok"></div></div>
-          <span class="tog-lbl">Animasi Rotasi</span>
-        </div>
-
-        <button class="gbtn" onclick="generate()">✦ Generate UR-IP</button>
-        <button class="gbtn secondary" onclick="decodeFromCanvas()">◈ Verifikasi Decode</button>
+      </div>
+      <div class="g4">
+        <div class="sv"><div class="sval" id="sc">0</div><div class="sk">Karakter</div></div>
+        <div class="sv"><div class="sval" id="sb">0</div><div class="sk">Bits</div></div>
+        <div class="sv"><div class="sval" id="sn">0</div><div class="sk">Nodes/Arm</div></div>
+        <div class="sv"><div class="sval">3</div><div class="sk">Spiral Arms</div></div>
+      </div>
+      <div class="card">
+        <div class="ch"><span class="ct">Bit Pattern · ARM 0</span></div>
+        <div class="cb" style="padding:12px 16px"><div id="bits" style="font-size:9px;line-height:2.2;word-break:break-all"></div></div>
       </div>
     </div>
-
-    <div class="canvas-panel">
-      <div class="canvas-wrap">
-        <canvas id="gen-canvas" width="440" height="440"></canvas>
-      </div>
-      <div class="canvas-footer">
-        <span class="cf-formula" id="cf-info">✦ UR-IP · Triskelion 0° 120° 240°</span>
-        <button class="dl-btn" onclick="downloadPNG()">↓ Unduh PNG</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- DECODE RESULT -->
-  <div class="decode-strip">
-    <div style="background:var(--s1);border:1px solid var(--b1)">
-      <div class="panel-hdr"><div class="phd"></div><div class="pht">Decode Verifikasi</div></div>
-      <div class="decode-grid" style="padding:2px">
-        <div>
-          <div class="decode-out" id="decode-out">Generate simbol terlebih dahulu...</div>
+    <div>
+      <div class="card">
+        <div class="ch">
+          <span class="ct">Simbol UR-IP v9</span>
+          <span class="bx" id="sym-lbl" style="color:var(--gold);border-color:var(--g3)">—</span>
         </div>
-        <div>
-          <div class="decode-meta" id="decode-meta">—</div>
-        </div>
+        <div class="cv" style="min-height:340px"><canvas id="cv-enc" width="320" height="320"></canvas></div>
       </div>
+      <a class="dl" id="dl-btn" onclick="prep(event)">↓ Download PNG</a>
     </div>
-  </div>
-
-  <!-- STATS -->
-  <div class="stats-row">
-    <div class="stat"><div class="sn" id="s-mode">—</div><div class="sl">Mode</div></div>
-    <div class="stat"><div class="sn" id="s-bits">—</div><div class="sl">Total Bits</div></div>
-    <div class="stat"><div class="sn" id="s-nodes">—</div><div class="sl">Nodes/Arm</div></div>
-    <div class="stat"><div class="sn" id="s-chars">—</div><div class="sl">Max Chars</div></div>
   </div>
 </div>
 
-<!-- ══ SCANNER PAGE ══ -->
-<div class="page" id="page-scan">
-  <div class="scan-layout">
-    <div class="scan-panel">
-      <div class="panel-hdr"><div class="phd"></div><div class="pht">Kamera</div></div>
-      <div class="scan-video-wrap">
-        <video id="scan-video" autoplay playsinline muted></video>
-        <div class="scan-overlay">
-          <div class="scan-reticle"></div>
-          <div class="scan-crosshair"></div>
-          <div class="scan-crosshairH"></div>
-          <div class="scan-center"></div>
+<!-- DECODE -->
+<div class="page" id="pg-dec">
+  <div class="g2">
+    <div>
+      <div class="card">
+        <div class="ch"><span class="ct">Upload UR-IP PNG</span></div>
+        <div class="cb">
+          <div class="drop" id="drop"
+            onclick="document.getElementById('fi').click()"
+            ondragover="event.preventDefault();this.classList.add('hl')"
+            ondragleave="this.classList.remove('hl')"
+            ondrop="onDrop(event)">
+            <div style="font-size:32px;margin-bottom:10px;opacity:.3">◎</div>
+            <div style="font-size:10px;color:var(--mu);letter-spacing:2px">KLIK ATAU DROP PNG UR-IP</div>
+          </div>
+          <input type="file" id="fi" accept="image/*" style="display:none" onchange="onFile(event)">
         </div>
-        <canvas id="scan-canvas" style="display:none"></canvas>
       </div>
-      <div class="scan-controls">
-        <button class="gbtn" onclick="startCamera()" style="flex:1;padding:10px">▶ Aktifkan Kamera</button>
-        <button class="gbtn secondary" onclick="stopCamera()" style="flex:1;padding:10px">■ Stop</button>
-        <button class="gbtn secondary" onclick="captureFrame()" style="width:100%;padding:10px">◎ Capture & Decode</button>
-      </div>
-      <div class="scan-result">
-        <div class="sr-text" id="scan-result-text">Arahkan kamera ke simbol UR-IP...</div>
-        <div class="sr-meta" id="scan-result-meta"></div>
+      <div id="dec-st" class="st nf">menunggu file...</div>
+      <div class="card" style="margin-top:2px">
+        <div class="ch"><span class="ct">Scan Overlay</span></div>
+        <div class="cv" style="min-height:160px"><canvas id="cv-scan" width="240" height="240"></canvas></div>
       </div>
     </div>
-
-    <!-- UPLOAD -->
-    <div class="scan-panel">
-      <div class="panel-hdr"><div class="phd"></div><div class="pht">Upload Gambar</div></div>
-      <div class="uzone" id="uzone">
-        <div class="uzone-lbl">↑ TAP PILIH FILE PNG / JPG</div>
-        <div class="uzone-hint">Drag & drop atau tap untuk pilih</div>
+    <div>
+      <div class="card">
+        <div class="ch"><span class="ct">Preview</span></div>
+        <div class="cv" style="min-height:200px"><canvas id="cv-dec" width="280" height="280"></canvas></div>
       </div>
-      <input type="file" id="filePick" accept="image/*" style="display:none">
-    </div>
-
-    <!-- MANUAL DECODE -->
-    <div class="scan-panel">
-      <div class="manual-section">
-        <div class="panel-hdr" style="padding:0 0 12px"><div class="phd"></div><div class="pht">Decode Manual — Paste Bits</div></div>
-        <div class="inp-group">
-          <span class="lbl">Bit String (0 dan 1)</span>
-          <textarea id="manual-bits" rows="3" placeholder="010110001..."></textarea>
+      <div class="card">
+        <div class="ch"><span class="ct">Hasil Decode</span></div>
+        <div class="cb">
+          <div class="rval" id="dec-res">—</div>
+          <div class="rmeta" id="dec-meta">upload PNG untuk decode</div>
         </div>
-        <span class="lbl">Mode</span>
-        <div class="mode-row" id="manual-mode-row" style="margin-bottom:16px">
-          <button class="mbtn active" onclick="setManualMode('LITE',this)"><span>LITE</span></button>
-          <button class="mbtn" onclick="setManualMode('STANDARD',this)"><span>STD</span></button>
-          <button class="mbtn" onclick="setManualMode('DENSE',this)"><span>DENSE</span></button>
-        </div>
-        <button class="gbtn secondary" onclick="manualDecode()" style="margin-bottom:10px">◈ Decode</button>
-        <div class="decode-out" id="manual-out" style="min-height:48px">—</div>
-        <div class="decode-meta" id="manual-meta" style="margin-top:8px">—</div>
-      </div>
-    </div>
-
-    <!-- TEST -->
-    <div class="scan-panel">
-      <div class="manual-section">
-        <div class="panel-hdr" style="padding:0 0 12px"><div class="phd"></div><div class="pht">Test Encode → Decode</div></div>
-        <div class="inp-group">
-          <input type="text" id="test-input" placeholder="Teks untuk ditest..." maxlength="35">
-        </div>
-        <button class="gbtn secondary" onclick="runTest()" style="margin-bottom:10px">▶ Jalankan Test</button>
-        <div class="decode-meta" id="test-result">—</div>
       </div>
     </div>
   </div>
 </div>
 
-<!-- ══ ABOUT PAGE ══ -->
-<div class="page" id="page-about">
-  <div class="about-section">
-    <div class="ab-card">
-      <div class="ab-title">Library Core UR-IP</div>
-      <div class="ab-body">JavaScript library yang menangani semua logika encoding, decoding, drawing, dan error correction untuk simbol Triskelion. <strong>3 spiral arm · 0° · 120° · 240° · Nodes sebagai titik bulat.</strong></div>
+<!-- ARSITEKTUR -->
+<div class="page" id="pg-abt">
+  <div class="g2" style="margin-bottom:2px">
+    <div class="card">
+      <div class="ch"><span class="ct">Simbol Lengkap</span><span class="bx" style="color:var(--gold);border-color:var(--g3)">v9</span></div>
+      <div class="cv"><canvas id="cv-a1" width="280" height="280"></canvas></div>
     </div>
-    <div class="ab-card">
-      <div class="ab-title">URIP.encode(text, mode)</div>
-      <div class="ab-code">
-<span class="k">const</span> result = URIP.<span class="k">encode</span>(<span class="s">"halo"</span>, <span class="s">"STANDARD"</span>);<br>
-result.bits      <span class="c">// array bit per arm</span><br>
-result.totalBits <span class="c">// total bits</span><br>
-result.mode      <span class="c">// mode yang dipakai</span>
-      </div>
-    </div>
-    <div class="ab-card">
-      <div class="ab-title">URIP.decode(bits, mode)</div>
-      <div class="ab-code">
-<span class="k">const</span> result = URIP.<span class="k">decode</span>(bits, <span class="s">"STANDARD"</span>);<br>
-result.text   <span class="c">// teks yang di-decode</span><br>
-result.ok     <span class="c">// CRC valid?</span><br>
-result.crcOk  <span class="c">// checksum status</span>
-      </div>
-    </div>
-    <div class="ab-card">
-      <div class="ab-title">Struktur Simbol Triskelion</div>
-      <div class="ab-body">
-        3 spiral arm · offset 0°, 120°, 240°<br>
-        Bit 1 = node besar (radius 6px)<br>
-        Bit 0 = tidak digambar (background gelap)<br>
-        Spiral logaritmik: r = a·e^(b·t)<br>
-        Timing ring + boundary ring sebagai reference<br>
-        Center Pancer: anchor deteksi<br>
-        CRC-16 + Reed-Solomon error correction
-      </div>
-    </div>
-    <div class="ab-card">
-      <div class="ab-title">Filosofi</div>
-      <div class="ab-body">
-        UR-IP tidak dirancang. UR-IP <em>ditemukan</em> — dari sketsa tangan, dari pertanyaan yang tidak tahu jawabannya, dari simbol yang sudah ada miliaran tahun.<br><br>
-        <strong>Pusat tidak ikut berputar.</strong> Pusat adalah anchor. Yang berputar adalah yang mengorbit.<br><br>
-        Tiga arm bukan kebetulan — triskelion adalah geometri minimum untuk redundansi dan error recovery.
-      </div>
+    <div class="card">
+      <div class="ch"><span class="ct">Layer: <span id="abt-lbl" style="color:var(--gold)">Semua</span></span></div>
+      <div class="cv"><canvas id="cv-a2" width="280" height="280"></canvas></div>
     </div>
   </div>
-  <div style="text-align:center;padding:24px;font-size:9px;color:var(--muted);letter-spacing:3px">
-    SYKLUS · 2026 · UR-IP · Triskelion · auroradewa.Ad74@gmail.com
+  <div class="lay4">
+    <div class="lay on" onclick="setLay('all',this)">
+      <div class="ldot" style="background:linear-gradient(135deg,#fff,var(--gold),var(--cy),var(--vi))"></div>
+      <div class="ltit" style="color:var(--g2)">Semua</div><div class="ldsc">struktur lengkap</div>
+    </div>
+    <div class="lay" onclick="setLay('anchor',this)">
+      <div class="ldot" style="background:#fff;box-shadow:0 0 8px #fff6"></div>
+      <div class="ltit" style="color:#fff">ANCHOR</div><div class="ldsc">3-ring · 0°<br>referensi utama</div>
+    </div>
+    <div class="lay" onclick="setLay('finder',this)">
+      <div class="ldot" style="background:var(--gold)"></div>
+      <div class="ltit" style="color:var(--gold)">FINDER</div><div class="ldsc">2-ring · 120° 240°<br>triangulasi</div>
+    </div>
+    <div class="lay" onclick="setLay('orbit',this)">
+      <div class="ldot" style="background:var(--mu)"></div>
+      <div class="ltit">ORBIT RING</div><div class="ldsc">lingkaran reference<br>center langsung</div>
+    </div>
+  </div>
+  <div class="lay4" style="margin-bottom:2px">
+    <div class="lay" onclick="setLay('spiral',this)">
+      <div class="ldot" style="background:var(--cy)"></div>
+      <div class="ltit" style="color:var(--cy)">SPIRAL</div><div class="ldsc">3 arm data<br>carrier wave</div>
+    </div>
+    <div class="lay" onclick="setLay('center',this)">
+      <div class="ldot" style="background:var(--vi)"></div>
+      <div class="ltit" style="color:var(--vi)">PUSAT</div><div class="ldsc">ruang data<br>observer ada di sini</div>
+    </div>
+    <div class="lay" style="cursor:default;opacity:.4">
+      <div class="ldot" style="border:1px solid var(--dim)"></div>
+      <div class="ltit" style="color:var(--mu)">O kecil</div><div class="ldsc">LITE · 7 kar</div>
+    </div>
+    <div class="lay" style="cursor:default;opacity:.4">
+      <div class="ldot" style="border:1px solid var(--dim)"></div>
+      <div class="ltit" style="color:var(--mu)">O besar</div><div class="ldsc">DENSE · 37 kar</div>
+    </div>
+  </div>
+  <div class="ic" id="abt-info">
+    <strong style="color:var(--tx)">UR-IP v9</strong> — Orbit Ring Architecture.<br>
+    Orbit luar = referensi tetap. Spiral dalam = data berubah. Dua dimensi berbeda — tidak bisa saling salah baca.<br>
+    Semakin kompleks informasi, semakin besar O yang dibutuhkan untuk membacanya.
+  </div>
+  <div style="margin-top:2px">
+    <div class="row">
+      <span style="font-size:9px;color:var(--mu);letter-spacing:2px">DEMO KATA:</span>
+      <button class="btn" onclick="setDemo('SYKLUS',this)">SYKLUS</button>
+      <button class="btn" onclick="setDemo('NOISE',this)">NOISE</button>
+      <button class="btn" onclick="setDemo('ORBIT',this)">ORBIT</button>
+      <button class="btn" onclick="setDemo('PANCER',this)">PANCER</button>
+      <button class="btn" onclick="setDemo('SPIRAL',this)">SPIRAL</button>
+      <button class="btn" onclick="setDemo('UR-IP',this)">UR-IP</button>
+    </div>
   </div>
 </div>
+
+<footer>SYKLUS · 2026 · UR-IP v9 · auroradewa.Ad74@gmail.com</footer>
 
 <script>
-// ══════════════════════════════════════════════════════════
-// SYKLUSLIB — Triskelion Core
-// 3 arm · 0° 120° 240° · Nodes sebagai circles
-// ══════════════════════════════════════════════════════════
-const URIP = (() => {
-
-  const VERSION = '6.0.0-triskelion';
-
-  // ── MODES ────────────────────────────────────────────────
-  // overhead = 5B header + 6B RS parity = 11B
-  // nodesPerArm * 3 bits / 8 = total bytes capacity
-  const MODES = {
-    LITE:     { nodesPerArm: 48,  maxBytes: 7,  tMin: 1.0, tMax: 7.0 * Math.PI, a: 0.14, b: 0.11 },
-    STANDARD: { nodesPerArm: 80,  maxBytes: 19, tMin: 1.0, tMax: 9.5 * Math.PI, a: 0.13, b: 0.10 },
-    DENSE:    { nodesPerArm: 128, maxBytes: 37, tMin: 1.0, tMax: 13.0 * Math.PI, a: 0.12, b: 0.095 },
-  };
-
-  // Compute draw radius for a node at position i (so decode can match exactly)
-  function nodeDrawRadius(i, n, mode, scale) {
-    const { tMin, tMax, a, b } = mode;
-    const t = tMin + (i / n) * (tMax - tMin);
-    const tNext = tMin + ((i + 1) / n) * (tMax - tMin);
-    const r = a * Math.exp(b * t) * scale;
-    const rNext = a * Math.exp(b * tNext) * scale;
-    // Arc-length spacing to next node
-    const dt = tNext - t;
-    const spacing = r * dt; // approximate arc spacing
-    // Node draw radius = 35% of spacing, clamped 2.5..6
-    return Math.min(6, Math.max(2.5, spacing * 0.35));
-  }
-
-  // ── THEMES ───────────────────────────────────────────────
-  const THEMES = {
-    gold:  { bg:'#04040a', primary:'#c8a840', bright:'#ffe898', dim:'#2a1a08', glow:'#c8a840' },
-    cyan:  { bg:'#020a06', primary:'#47ff8a', bright:'#b0ffe0', dim:'#082010', glow:'#47ff8a' },
-    red:   { bg:'#0a0204', primary:'#ff476a', bright:'#ffb0c0', dim:'#280810', glow:'#ff476a' },
-    blue:  { bg:'#02020a', primary:'#a0a0ff', bright:'#d0d0ff', dim:'#080828', glow:'#a0a0ff' },
-    white: { bg:'#04040a', primary:'#e0dfc8', bright:'#ffffff', dim:'#1a1a2a', glow:'#ffffff' },
-  };
-
-  // ── CRC-16 ───────────────────────────────────────────────
-  function crc16(bytes) {
-    let crc = 0xFFFF;
-    for (const b of bytes) {
-      crc ^= b << 8;
-      for (let i = 0; i < 8; i++) crc = crc & 0x8000 ? (crc << 1) ^ 0x1021 : crc << 1;
-    }
-    return crc & 0xFFFF;
-  }
-
-  // ── GALOIS FIELD ─────────────────────────────────────────
-  const GF_EXP = new Uint8Array(512);
-  const GF_LOG = new Uint8Array(256);
-  (function(){let x=1;for(let i=0;i<255;i++){GF_EXP[i]=x;GF_LOG[x]=i;x<<=1;if(x&0x100)x^=0x11D;}for(let i=255;i<512;i++)GF_EXP[i]=GF_EXP[i-255];})();
-  const gfMul=(a,b)=>a&&b?GF_EXP[GF_LOG[a]+GF_LOG[b]]:0;
-  const gfDiv=(a,b)=>a&&b?GF_EXP[(GF_LOG[a]-GF_LOG[b]+255)%255]:0;
-  const gfPow=(x,p)=>GF_EXP[(GF_LOG[x]*p)%255];
-
-  function rsEncode(data, ns) {
-    const gen = [1];
-    for (let i = 0; i < ns; i++) {
-      const g = [1, gfPow(2, i)];
-      const ng = new Array(gen.length + 1).fill(0);
-      for (let j = 0; j < gen.length; j++) for (let k = 0; k < g.length; k++) ng[j+k] ^= gfMul(gen[j], g[k]);
-      gen.length = 0; ng.forEach(v => gen.push(v));
-    }
-    const msg = [...data, ...new Array(ns).fill(0)];
-    for (let i = 0; i < data.length; i++) {
-      const c = msg[i];
-      if (c) for (let j = 0; j < gen.length; j++) msg[i+j] ^= gfMul(gen[j], c);
-    }
-    return msg.slice(data.length);
-  }
-
-  function rsCheck(bytes, ns) {
-    const RS_NSYM = ns;
-    let data = [...bytes];
-    // Simple syndrome check — if all zero, no error
-    const synd = [];
-    for (let i = 0; i < RS_NSYM; i++) {
-      let s = 0; for (const b of data) s = gfMul(s, gfPow(2,i)) ^ b;
-      synd.push(s);
-    }
-    const hasError = synd.some(s => s !== 0);
-    return { data: data.slice(0, data.length - RS_NSYM), hasError };
-  }
-
-  const enc = new TextEncoder();
-  const dec = new TextDecoder();
-
-  // ── ENCODE ───────────────────────────────────────────────
-  function encode(text, modeName = 'STANDARD') {
-    const mode = MODES[modeName];
-    if (!mode) throw new Error('Unknown mode: ' + modeName);
-    const payload = enc.encode(text);
-    if (payload.length > mode.maxBytes) throw new Error(`Too long for ${modeName} (max ${mode.maxBytes}B)`);
-
-    // Header: magic(1) + mode_idx(1) + payload_len(1) + crc(2)
-    const modeIdx = Object.keys(MODES).indexOf(modeName);
-    const checksum = crc16(payload);
-    const header = [0xAD, modeIdx, payload.length, (checksum >> 8) & 0xFF, checksum & 0xFF];
-    const dataBytes = [...header, ...payload];
-
-    // RS parity — 6 symbols
-    const RS_NSYM = 6;
-    const parity = rsEncode(dataBytes, RS_NSYM);
-    const fullBytes = [...dataBytes, ...parity];
-
-    // Bits
-    const allBits = [];
-    for (const byte of fullBytes)
-      for (let b = 7; b >= 0; b--) allBits.push((byte >> b) & 1);
-
-    // Distribute across 3 arms — interleaved
-    const n = mode.nodesPerArm;
-    const arm0 = [], arm1 = [], arm2 = [];
-    for (let i = 0; i < n; i++) {
-      arm0.push(allBits[i * 3]     || 0);
-      arm1.push(allBits[i * 3 + 1] || 0);
-      arm2.push(allBits[i * 3 + 2] || 0);
-    }
-
-    return {
-      arms: [arm0, arm1, arm2],
-      allBits,
-      mode: modeName,
-      text,
-      totalBits: n * 3,
-      nodesPerArm: n,
-    };
-  }
-
-  // ── DECODE ───────────────────────────────────────────────
-  function decode(arms, modeName) {
-    try {
-      const n = arms[0].length;
-      // Reconstruct interleaved bits
-      const allBits = [];
-      for (let i = 0; i < n; i++) {
-        allBits.push(arms[0][i] || 0);
-        allBits.push(arms[1][i] || 0);
-        allBits.push(arms[2][i] || 0);
-      }
-      // To bytes
-      const bytes = [];
-      for (let i = 0; i < Math.floor(allBits.length / 8); i++) {
-        let byte = 0;
-        for (let b = 0; b < 8; b++) byte = (byte << 1) | (allBits[i * 8 + b] || 0);
-        bytes.push(byte);
-      }
-      // RS check
-      const RS_NSYM = 6;
-      const { data, hasError } = rsCheck(bytes, RS_NSYM);
-      // Validate magic
-      if (data[0] !== 0xAD) return { ok: false, text: '', error: 'Bad magic' };
-      const payloadLen = data[2];
-      if (payloadLen <= 0 || payloadLen > 35) return { ok: false, text: '', error: 'Invalid length' };
-      // CRC
-      const storedCRC = (data[3] << 8) | data[4];
-      const payloadBytes = data.slice(5, 5 + payloadLen);
-      const computedCRC = crc16(payloadBytes);
-      const crcOk = storedCRC === computedCRC;
-      const text = dec.decode(new Uint8Array(payloadBytes));
-      return { ok: crcOk, text, crcOk, hasError, storedCRC, computedCRC };
-    } catch (e) {
-      return { ok: false, text: '', error: e.message };
-    }
-  }
-
-  // ── SPIRAL POINT ────────────────────────────────────────
-  // Returns position of node i (0-indexed) along arm with given offset
-  function spiralPoint(i, n, offset, cx, cy, scale, mode) {
-    const { tMin, tMax, a, b } = mode;
-    const t = tMin + (i / n) * (tMax - tMin);
-    const r = a * Math.exp(b * t) * scale;
-    return {
-      x: cx + r * Math.cos(t + offset),
-      y: cy + r * Math.sin(t + offset),
-      r
-    };
-  }
-
-  // ── DRAW ─────────────────────────────────────────────────
-  function draw(canvas, er, theme = 'gold', animOffset = 0) {
-    const ctx = canvas.getContext('2d');
-    const W = canvas.width, H = canvas.height;
-    const cx = W / 2, cy = H / 2;
-    const clr = THEMES[theme] || THEMES.gold;
-    const mode = MODES[er.mode];
-    const scale = Math.min(W, H) * 0.33;
-    const boundaryR = Math.min(W, H) * 0.42;
-
-    ctx.fillStyle = clr.bg;
-    ctx.fillRect(0, 0, W, H);
-
-    // Boundary ring
-    ctx.beginPath(); ctx.arc(cx, cy, boundaryR, 0, Math.PI * 2);
-    ctx.strokeStyle = clr.primary + '55'; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.5; ctx.stroke(); ctx.globalAlpha = 1;
-
-    // Timing ring — 24 dots
-    const timingR = boundaryR * 0.9;
-    for (let i = 0; i < 24; i++) {
-      const a = (i / 24) * Math.PI * 2 + animOffset;
-      const tx = cx + timingR * Math.cos(a);
-      const ty = cy + timingR * Math.sin(a);
-      ctx.beginPath();
-      ctx.arc(tx, ty, i % 8 === 0 ? 3.5 : 1.5, 0, Math.PI * 2);
-      ctx.fillStyle = clr.primary;
-      ctx.globalAlpha = i % 8 === 0 ? 0.6 : 0.15;
-      ctx.fill(); ctx.globalAlpha = 1;
-    }
-
-    // 3 arms at 0°, 120°, 240°
-    const offsets = [animOffset, animOffset + 2 * Math.PI / 3, animOffset + 4 * Math.PI / 3];
-    const armColors = [clr.bright, clr.bright, clr.bright];
-
-    offsets.forEach((offset, si) => {
-      const bits = er.arms[si];
-      const n = bits.length;
-
-      // Spiral guide — very faint, does NOT affect decode
-      ctx.beginPath();
-      for (let i = 0; i < n; i++) {
-        const p = spiralPoint(i, n, offset, cx, cy, scale, mode);
-        if (i === 0) ctx.moveTo(p.x, p.y); else ctx.lineTo(p.x, p.y);
-      }
-      ctx.strokeStyle = clr.primary + '12'; ctx.lineWidth = 0.5; ctx.stroke();
-
-      // Data nodes: bit=1 → bright circle, bit=0 → not drawn
-      for (let i = 0; i < n; i++) {
-        if (bits[i] !== 1) continue;
-        const p = spiralPoint(i, n, offset, cx, cy, scale, mode);
-        const nr = nodeDrawRadius(i, n, mode, scale);
-        ctx.beginPath(); ctx.arc(p.x, p.y, nr, 0, Math.PI * 2);
-        ctx.fillStyle = armColors[si];
-        ctx.globalAlpha = 0.92;
-        ctx.fill(); ctx.globalAlpha = 1;
-      }
-
-      // Arm start marker (helps visual alignment, not used in decode)
-      const tip = spiralPoint(0, n, offset, cx, cy, scale, mode);
-      ctx.beginPath(); ctx.arc(tip.x, tip.y, 4, 0, Math.PI * 2);
-      ctx.strokeStyle = clr.primary + '88'; ctx.lineWidth = 1;
-      ctx.stroke();
-    });
-
-    // Center Pancer — SOLID white circle, easy to find as anchor
-    ctx.beginPath(); ctx.arc(cx, cy, 18, 0, Math.PI * 2);
-    ctx.fillStyle = clr.bg; ctx.fill(); // clear center area first
-
-    const cg = ctx.createRadialGradient(cx, cy, 0, cx, cy, 18);
-    cg.addColorStop(0, '#ffffff'); cg.addColorStop(0.5, clr.bright); cg.addColorStop(1, clr.primary + '00');
-    ctx.beginPath(); ctx.arc(cx, cy, 18, 0, Math.PI * 2);
-    ctx.fillStyle = cg; ctx.shadowColor = clr.glow; ctx.shadowBlur = 20; ctx.fill(); ctx.shadowBlur = 0;
-  }
-
-  function drawEmpty(canvas, theme = 'gold') {
-    const ctx = canvas.getContext('2d');
-    const W = canvas.width, H = canvas.height, cx = W / 2, cy = H / 2;
-    const clr = THEMES[theme] || THEMES.gold;
-    ctx.fillStyle = clr.bg; ctx.fillRect(0, 0, W, H);
-    const offsets = [0, 2 * Math.PI / 3, 4 * Math.PI / 3];
-    offsets.forEach(off => {
-      ctx.beginPath();
-      ctx.moveTo(cx, cy);
-      ctx.lineTo(cx + W*0.35*Math.cos(off), cy + H*0.35*Math.sin(off));
-      ctx.strokeStyle = clr.primary + '15'; ctx.lineWidth = 0.5; ctx.stroke();
-    });
-    [60,100,140,170].forEach((r,i)=>{
-      ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);
-      ctx.strokeStyle=clr.primary+(Math.max(8,20-i*4)).toString(16)+'0';
-      ctx.lineWidth=0.5;ctx.stroke();
-    });
-    const g = ctx.createRadialGradient(cx,cy,0,cx,cy,14);
-    g.addColorStop(0,'#fff');g.addColorStop(0.5,clr.bright);g.addColorStop(1,clr.primary+'00');
-    ctx.beginPath();ctx.arc(cx,cy,14,0,Math.PI*2);
-    ctx.fillStyle=g;ctx.shadowColor=clr.glow;ctx.shadowBlur=20;ctx.fill();ctx.shadowBlur=0;
-    ctx.font='9px IBM Plex Mono';ctx.fillStyle=clr.primary+'44';ctx.textAlign='center';
-    ctx.fillText('tulis teks · generate',cx,cy+60);
-  }
-
-  return { VERSION, MODES, THEMES, encode, decode, draw, drawEmpty, spiralPoint, nodeDrawRadius,
-    autoMode(text){ const b = enc.encode(text).length; if(b<=7)return'LITE'; if(b<=19)return'STANDARD'; return'DENSE'; }
-  };
-})();
-
-// ══════════════════════════════════════════════════════════
-// APP STATE
-// ══════════════════════════════════════════════════════════
-let currentMode = 'LITE';
-let currentTheme = 'gold';
-let animFrame = null;
-let animAngle = 0;
-let animOn = true;
-let lastEncoded = null;
-let stream = null;
-let manualMode = 'LITE';
-let scanLoopTimer = null;
-
-// ── NAV ───────────────────────────────────────────────────
-function showPage(id, el) {
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('page-' + id).classList.add('active');
-  if (el) el.classList.add('active');
-  else document.querySelectorAll('.nav-tab')[id==='gen'?0:id==='scan'?1:2].classList.add('active');
-}
-
-// ── MODE / THEME ──────────────────────────────────────────
-function setMode(m, el) {
-  currentMode = m;
-  document.querySelectorAll('#mode-row .mbtn').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
-}
-function setTheme(t, el) {
-  currentTheme = t;
-  document.querySelectorAll('.tdot').forEach(d => d.classList.remove('active'));
-  el.classList.add('active');
-  if (!lastEncoded) URIP.drawEmpty(document.getElementById('gen-canvas'), t);
-  else redraw();
-}
-function toggleAnim(el) {
-  animOn = !animOn;
-  el.classList.toggle('on', animOn);
-  if (animOn && lastEncoded) startAnim();
-  else stopAnim();
-}
-
-// ── ANIMATE ───────────────────────────────────────────────
-function stopAnim() { if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; } }
-function startAnim() {
-  stopAnim();
-  function loop() {
-    animAngle += 0.006;
-    URIP.draw(document.getElementById('gen-canvas'), lastEncoded, currentTheme, animAngle);
-    animFrame = requestAnimationFrame(loop);
-  }
-  loop();
-}
-function redraw() {
-  if (!lastEncoded) return;
-  stopAnim();
-  if (animOn) startAnim();
-  else URIP.draw(document.getElementById('gen-canvas'), lastEncoded, currentTheme, 0);
-}
-
-// ── GENERATE ─────────────────────────────────────────────
-function generate() {
-  const text = document.getElementById('gen-input').value.trim();
-  if (!text) return;
-
-  const autoM = URIP.autoMode(text);
-  const mode = MODES_ORDER.indexOf(currentMode) >= MODES_ORDER.indexOf(autoM) ? currentMode : autoM;
-
-  try {
-    lastEncoded = URIP.encode(text, mode);
-  } catch (e) {
-    document.getElementById('decode-out').textContent = '⚠ ' + e.message;
-    return;
-  }
-
-  // Update stats
-  document.getElementById('s-mode').textContent = mode;
-  document.getElementById('s-bits').textContent = lastEncoded.totalBits;
-  document.getElementById('s-nodes').textContent = lastEncoded.nodesPerArm;
-  document.getElementById('s-chars').textContent = URIP.MODES[mode].maxBytes;
-  document.getElementById('cf-info').textContent = `✦ UR-IP · ${mode} · ${lastEncoded.nodesPerArm}×3 nodes`;
-
-  // Verify decode
-  const dec = URIP.decode(lastEncoded.arms, mode);
-  const dOut = document.getElementById('decode-out');
-  const dMeta = document.getElementById('decode-meta');
-  if (dec.ok) {
-    dOut.textContent = '✦ ' + dec.text;
-    dMeta.innerHTML = `CRC: <span style="color:var(--ok)">✓</span> &nbsp; RS: <span style="color:var(--ok)">✓</span> &nbsp; Status: <span style="color:var(--ok)">VALID</span>`;
-  } else {
-    dOut.textContent = dec.text || '[decode gagal]';
-    dMeta.innerHTML = `CRC: <span style="color:var(--err)">✗</span> &nbsp; Text: ${dec.text}`;
-  }
-
-  redraw();
-}
-
-const MODES_ORDER = ['LITE','STANDARD','DENSE'];
-
-// ── DOWNLOAD ─────────────────────────────────────────────
-function downloadPNG() {
-  if (!lastEncoded) return;
-  stopAnim();
-  const canvas = document.getElementById('gen-canvas');
-  URIP.draw(canvas, lastEncoded, currentTheme, 0);
-  const link = document.createElement('a');
-  const safe = lastEncoded.text.slice(0, 20).replace(/[^a-zA-Z0-9]/g, '_');
-  link.download = `URIP_${safe}_${lastEncoded.mode}.png`;
-  link.href = canvas.toDataURL('image/png');
-  link.click();
-  if (animOn) startAnim();
-}
-
-// ══════════════════════════════════════════════════════════
-// IMAGE DECODE ENGINE
-// ══════════════════════════════════════════════════════════
-
-// ══════════════════════════════════════════════════════════
-// RADAR DECODE ENGINE
-// Prinsip: pancarkan probe sepanjang spiral
-//          baca PUNCAK sinyal yang kembali
-//          bukan threshold absolut
-// ══════════════════════════════════════════════════════════
-
-// Otsu threshold
-function otsuThreshold(imgData, W, H) {
-  const hist = new Array(256).fill(0);
-  let total = 0;
-  for (let y = 0; y < H; y += 2) for (let x = 0; x < W; x += 2) {
-    const i = (y * W + x) * 4;
-    hist[Math.round((imgData[i] + imgData[i+1] + imgData[i+2]) / 3)]++;
-    total++;
-  }
-  let sum = 0; for (let i = 0; i < 256; i++) sum += i * hist[i];
-  let sumB = 0, wB = 0, maxVar = 0, thresh = 128;
-  for (let t = 0; t < 256; t++) {
-    wB += hist[t]; if (!wB) continue;
-    const wF = total - wB; if (!wF) break;
-    sumB += t * hist[t];
-    const mB = sumB / wB, mF = (sum - sumB) / wF;
-    const v = wB * wF * (mB - mF) * (mB - mF);
-    if (v > maxVar) { maxVar = v; thresh = t; }
-  }
-  return thresh;
-}
-
-// Sample brightness in circular area
-function sampleArea(imgData, W, H, px, py, radius) {
-  let sum = 0, cnt = 0;
-  const r = Math.max(2, Math.round(radius));
-  for (let dy = -r; dy <= r; dy++) for (let dx = -r; dx <= r; dx++) {
-    if (dx*dx + dy*dy > r*r) continue;
-    const x = Math.round(px + dx), y = Math.round(py + dy);
-    if (x >= 0 && x < W && y >= 0 && y < H) {
-      const i = (y * W + x) * 4;
-      sum += (imgData[i] + imgData[i+1] + imgData[i+2]) / 3;
-      cnt++;
-    }
-  }
-  return cnt > 0 ? sum / cnt : 0;
-}
-
-// RADAR: scan along spiral arm, collect brightness profile per node
-// Returns array of brightness values (not bits yet)
-function radarScanArm(imgData, W, H, cx, cy, scale, n, offset, mode) {
-  const profile = [];
-  const drawR = (i) => URIP.nodeDrawRadius(i, n, mode, scale);
-
-  for (let i = 0; i < n; i++) {
-    const p = URIP.spiralPoint(i, n, offset, cx, cy, scale, mode);
-    const r = drawR(i);
-    // Primary sample — at exact node position
-    const b0 = sampleArea(imgData, W, H, p.x, p.y, r * 0.9);
-    // Neighbor samples — small offset along spiral to check local peak
-    const pPrev = i > 0   ? URIP.spiralPoint(i-1, n, offset, cx, cy, scale, mode) : null;
-    const pNext = i < n-1 ? URIP.spiralPoint(i+1, n, offset, cx, cy, scale, mode) : null;
-    // Background = average of midpoints between nodes (not on nodes)
-    let bgSamples = [];
-    if (pPrev) {
-      const mid = { x:(p.x+pPrev.x)/2, y:(p.y+pPrev.y)/2 };
-      bgSamples.push(sampleArea(imgData, W, H, mid.x, mid.y, r * 0.5));
-    }
-    if (pNext) {
-      const mid = { x:(p.x+pNext.x)/2, y:(p.y+pNext.y)/2 };
-      bgSamples.push(sampleArea(imgData, W, H, mid.x, mid.y, r * 0.5));
-    }
-    const bg = bgSamples.length ? bgSamples.reduce((a,b)=>a+b)/bgSamples.length : 0;
-    // RADAR RETURN: signal above local background = node present
-    // This is relative, not absolute — like radar contrast
-    profile.push({ signal: b0, background: bg, contrast: b0 - bg, idx: i });
-  }
-  return profile;
-}
-
-// Convert radar profile to bits using local contrast
-// A node is "1" if its signal peaks above local background
-function profileToBits(profile, globalThresh) {
-  // Normalize contrast values
-  const contrasts = profile.map(p => p.contrast);
-  const maxC = Math.max(...contrasts);
-  const minC = Math.min(...contrasts);
-  const range = maxC - minC || 1;
-
-  // Dynamic local threshold per node using sliding window
-  const WINDOW = 5;
-  return profile.map((p, i) => {
-    // Local window average contrast
-    const lo = Math.max(0, i - WINDOW);
-    const hi = Math.min(profile.length - 1, i + WINDOW);
-    const windowContrasts = contrasts.slice(lo, hi+1);
-    const localMean = windowContrasts.reduce((a,b)=>a+b) / windowContrasts.length;
-    const localMax  = Math.max(...windowContrasts);
-
-    // Bit = 1 if this node's contrast is in top half of local window
-    // AND signal is above global threshold
-    const normalizedC = (p.contrast - minC) / range;
-    const isAboveLocal = p.contrast > (localMean + localMax) / 2;
-    const isAboveGlobal = p.signal > globalThresh;
-
-    return (isAboveLocal && isAboveGlobal) ? 1 : 0;
-  });
-}
-
-// Find center anchor — the brightest compact cluster (Pancer)
-function findCenter(imgData, W, H) {
-  // Scan center 60% of image for brightest region
-  let maxBright = 0, cx = W/2, cy = H/2;
-  const x0 = W*0.2, x1 = W*0.8, y0 = H*0.2, y1 = H*0.8;
-  const R = Math.min(W, H) * 0.04; // compact cluster radius
-  for (let y = y0; y < y1; y += 3) for (let x = x0; x < x1; x += 3) {
-    const b = sampleArea(imgData, W, H, x, y, R);
-    if (b > maxBright) { maxBright = b; cx = x; cy = y; }
-  }
-  return { cx, cy, maxBright };
-}
-
-// Full radar decode — one attempt at given cx,cy,scale
-function radarDecode(imgData, W, H, cx, cy, scale, modeName, globalThresh) {
-  const mode = URIP.MODES[modeName];
-  const n = mode.nodesPerArm;
-  const offsets = [0, 2*Math.PI/3, 4*Math.PI/3];
-  const arms = [];
-
-  for (const offset of offsets) {
-    const profile = radarScanArm(imgData, W, H, cx, cy, scale, n, offset, mode);
-    const bits = profileToBits(profile, globalThresh);
-    arms.push(bits);
-  }
-
-  return URIP.decode(arms, modeName);
-}
-
-// Simple direct decode — untuk PNG generated by app (exact coordinates known)
-function directDecode(imgData, W, H, cx, cy, scale, modeName, thresh) {
-  const mode = URIP.MODES[modeName];
-  const n = mode.nodesPerArm;
-  const offsets = [0, 2*Math.PI/3, 4*Math.PI/3];
-  const arms = [];
-
-  for (const offset of offsets) {
-    const bits = [];
-    for (let i = 0; i < n; i++) {
-      const p = URIP.spiralPoint(i, n, offset, cx, cy, scale, mode);
-      const r = Math.max(2, URIP.nodeDrawRadius(i, n, mode, scale) * 0.85);
-      const b = sampleArea(imgData, W, H, p.x, p.y, r);
-      bits.push(b > thresh ? 1 : 0);
-    }
-    arms.push(bits);
-  }
-  return URIP.decode(arms, modeName);
-}
-
-// Master decode — tries modes, scales, inverted
-function decodeFromImageData(ctx, W, H) {
-  const imgData = ctx.getImageData(0, 0, W, H).data;
-  const thresh = otsuThreshold(imgData, W, H);
-
-  const modes = ['LITE', 'STANDARD', 'DENSE'];
-  const baseScale = Math.min(W, H) * 0.33;
-  const scales = [baseScale, baseScale*0.97, baseScale*1.03,
-                  baseScale*0.94, baseScale*1.06];
-
-  let best = null;
-
-  // ── PASS 1: Direct decode, exact center W/2 H/2 ──
-  // PNG dari app: center selalu tepat di tengah
-  const cx0 = W / 2, cy0 = H / 2;
-  for (const modeName of modes) {
-    for (const scale of scales) {
-      // Try normal threshold
-      const res = directDecode(imgData, W, H, cx0, cy0, scale, modeName, thresh);
-      if (res && res.ok) return { res, modeName };
-      if (!best && res?.text?.replace(/[^\x20-\x7E]/g,'').length > 1) best = { res, modeName };
-
-      // Try lower threshold (dim nodes)
-      const res2 = directDecode(imgData, W, H, cx0, cy0, scale, modeName, thresh * 0.7);
-      if (res2 && res2.ok) return { res: res2, modeName };
-    }
-  }
-
-  // ── PASS 2: Radar decode, detected center (kamera/foto luar) ──
-  const { cx, cy } = findCenter(imgData, W, H);
-  const allCenters = [[cx0, cy0]];
-  if (Math.hypot(cx-cx0, cy-cy0) > 4) allCenters.push([cx, cy]);
-
-  const scalesFull = [baseScale, baseScale*0.95, baseScale*1.05,
-                      baseScale*0.9, baseScale*1.1, baseScale*0.85, baseScale*1.15];
-
-  for (const [pcx, pcy] of allCenters) {
-    for (const modeName of modes) {
-      for (const scale of scalesFull) {
-        const res = radarDecode(imgData, W, H, pcx, pcy, scale, modeName, thresh);
-        if (res && res.ok) return { res, modeName };
-        if (!best && res?.text?.replace(/[^\x20-\x7E]/g,'').length > 1) best = { res, modeName };
-      }
-    }
-  }
-
-  return best || null;
-}
-
-// ══════════════════════════════════════════════════════════
-// CAMERA
-// ══════════════════════════════════════════════════════════
-async function startCamera() {
-  const rtxt = document.getElementById('scan-result-text');
-  const rmeta = document.getElementById('scan-result-meta');
-
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    rtxt.textContent = '⚠ Kamera tidak tersedia.';
-    rmeta.innerHTML = '<span style="color:var(--warn)">Gunakan fitur Upload PNG/JPG di bawah.</span>';
-    return;
-  }
-  const isSecure = location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
-  if (!isSecure) {
-    rtxt.textContent = '⚠ Kamera butuh HTTPS.';
-    rmeta.innerHTML = '<span style="color:var(--warn)">File lokal tidak bisa akses kamera di Android. Gunakan Upload PNG/JPG.</span>';
-    return;
-  }
-  try {
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 1280 } } });
-    } catch(e) {
-      stream = await navigator.mediaDevices.getUserMedia({ video: true });
-    }
-    const video = document.getElementById('scan-video');
-    video.srcObject = stream;
-    await video.play();
-    rtxt.textContent = 'Kamera aktif — arahkan ke simbol UR-IP dan tekan Capture...';
-    rmeta.textContent = '';
-    startScanLoop();
-  } catch (e) {
-    rtxt.textContent = '⚠ ' + e.message;
-    rmeta.innerHTML = '<span style="color:var(--warn)">Gunakan Upload PNG/JPG</span>';
-  }
-}
-
-function stopCamera() {
-  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
-  stopScanLoop();
-  document.getElementById('scan-video').srcObject = null;
-  document.getElementById('scan-result-text').textContent = 'Kamera dimatikan.';
-  document.getElementById('scan-result-meta').textContent = '';
-}
-
-function startScanLoop() {
-  stopScanLoop();
-  scanLoopTimer = setInterval(() => {
-    const video = document.getElementById('scan-video');
-    if (!video.srcObject || video.paused || video.videoWidth === 0) return;
-    const cv = document.getElementById('scan-canvas');
-    const size = Math.min(video.videoWidth, video.videoHeight, 800);
-    cv.width = size; cv.height = size;
-    const ctx = cv.getContext('2d');
-    const sx = (video.videoWidth - size) / 2;
-    const sy = (video.videoHeight - size) / 2;
-    ctx.drawImage(video, sx, sy, size, size, 0, 0, size, size);
-    const result = decodeFromImageData(ctx, size, size);
-    if (result && result.res.ok) {
-      document.getElementById('scan-result-text').textContent = '✦ ' + result.res.text;
-      document.getElementById('scan-result-meta').innerHTML = `<span style="color:var(--ok)">✓ CRC valid</span> · ${result.modeName} · auto-scan`;
-      stopScanLoop();
-    }
-  }, 1500);
-}
-
-function stopScanLoop() {
-  if (scanLoopTimer) { clearInterval(scanLoopTimer); scanLoopTimer = null; }
-}
-
-function captureFrame() {
-  const video = document.getElementById('scan-video');
-  const rtxt = document.getElementById('scan-result-text');
-  const rmeta = document.getElementById('scan-result-meta');
-  if (!video.srcObject) { rtxt.textContent = '⚠ Aktifkan kamera dulu.'; return; }
-  const cv = document.getElementById('scan-canvas');
-  const size = Math.min(video.videoWidth || 640, video.videoHeight || 640, 800);
-  cv.width = size; cv.height = size;
-  const ctx = cv.getContext('2d');
-  const sx = (video.videoWidth - size) / 2, sy = (video.videoHeight - size) / 2;
-  ctx.drawImage(video, sx, sy, size, size, 0, 0, size, size);
-  rtxt.textContent = '· memproses ·'; rmeta.textContent = '';
-  setTimeout(() => {
-    const result = decodeFromImageData(ctx, size, size);
-    if (result && result.res.ok) {
-      rtxt.textContent = '✦ ' + result.res.text;
-      rmeta.innerHTML = `<span style="color:var(--ok)">✓ CRC valid</span> · ${result.modeName}`;
-    } else if (result) {
-      rtxt.textContent = '⚠ ' + (result.res.text || 'Terbaca sebagian');
-      rmeta.innerHTML = `<span style="color:var(--warn)">⚠ CRC mismatch</span> · ${result.modeName}`;
-    } else {
-      rtxt.textContent = 'Tidak terbaca — pastikan simbol di tengah';
-      rmeta.textContent = 'Coba Capture lagi atau Upload PNG';
-    }
-  }, 30);
-}
-
-// ══════════════════════════════════════════════════════════
-// UPLOAD
-// ══════════════════════════════════════════════════════════
-document.getElementById('uzone').onclick = () => document.getElementById('filePick').click();
-document.getElementById('filePick').onchange = function(e) {
-  const file = e.target.files[0];
-  if (!file) return;
-  const rtxt = document.getElementById('scan-result-text');
-  const rmeta = document.getElementById('scan-result-meta');
-  rtxt.textContent = '· memproses gambar ·'; rmeta.textContent = '';
-  const img = new Image();
-  img.onload = function() {
-    const MAX = 900;
-    let W = img.width, H = img.height;
-    if (W > MAX || H > MAX) { const s = MAX / Math.max(W, H); W = Math.round(W*s); H = Math.round(H*s); }
-    const cv = document.getElementById('scan-canvas');
-    cv.width = W; cv.height = H;
-    const ctx = cv.getContext('2d');
-    ctx.drawImage(img, 0, 0, W, H);
-    rmeta.textContent = `${W}×${H}px · ${file.name} · scanning...`;
-    setTimeout(() => {
-      const result = decodeFromImageData(ctx, W, H);
-      if (result && result.res.ok) {
-        rtxt.textContent = '✦ ' + result.res.text;
-        rmeta.innerHTML = `<span style="color:var(--ok)">✓ CRC valid</span> · ${result.modeName} · ${W}×${H}px`;
-      } else if (result) {
-        rtxt.textContent = '⚠ ' + (result.res.text || 'Terbaca sebagian');
-        rmeta.innerHTML = `<span style="color:var(--warn)">⚠ CRC mismatch</span> · ${result.modeName} · coba lagi`;
-      } else {
-        rtxt.textContent = 'Tidak terbaca';
-        rmeta.innerHTML = `<span style="color:var(--err)">✗</span> · ${W}×${H}px · pastikan gambar UR-IP yang valid`;
-      }
-      URL.revokeObjectURL(img.src);
-      e.target.value = '';
-    }, 30);
-  };
-  img.src = URL.createObjectURL(file);
+// ── GEOMETRY ────────────────────────────────────────────
+const ORBIT_R_RATIO = 0.47; // orbit ring radius / canvas size
+const DATA_MAX_RATIO= 0.37; // max spiral data radius / canvas size
+const ANCHOR_RINGS  = [16,11,6]; // 3-ring radii
+const FINDER_RINGS  = [11,6];    // 2-ring radii
+const CENTER_R      = 11;
+
+const MODES = {
+  LITE:     {n:48,  max:13, tMin:.5, tMax:5.5*Math.PI,  a:.14, b:.108},
+  STANDARD: {n:80,  max:25, tMin:.5, tMax:7.5*Math.PI,  a:.13, b:.098},
+  DENSE:    {n:128, max:43, tMin:.5, tMax:10.5*Math.PI, a:.12, b:.090},
 };
 
-// ══════════════════════════════════════════════════════════
-// DECODE FROM CANVAS (VERIFY)
-// ══════════════════════════════════════════════════════════
-function decodeFromCanvas() {
-  if (!lastEncoded) { alert('Generate simbol dulu!'); return; }
-  // Decode langsung dari arms di memory — tidak perlu baca pixel
-  // (canvas punya glow/shadow yang merusak pixel read)
-  const res = URIP.decode(lastEncoded.arms, lastEncoded.mode);
-  showPage('scan');
-  const rtxt = document.getElementById('scan-result-text');
-  const rmeta = document.getElementById('scan-result-meta');
-  if (res.ok) {
-    rtxt.textContent = '✦ ' + res.text;
-    rmeta.innerHTML = `<span style="color:var(--ok)">✓ CRC valid</span> · ${lastEncoded.mode} · in-memory decode`;
+// ── CRC16 ───────────────────────────────────────────────
+function crc16(b){
+  let c=0xFFFF;
+  for(const x of b){c^=x<<8;for(let i=0;i<8;i++)c=(c&0x8000)?((c<<1)^0x1021)&0xFFFF:(c<<1)&0xFFFF;}
+  return c;
+}
+
+// ── SPIRAL ─────────────────────────────────────────────
+function spt(i,n,off,cx,cy,sc,m){
+  const t=m.tMin+(i/n)*(m.tMax-m.tMin),r=m.a*Math.exp(m.b*t)*sc;
+  return {x:cx+r*Math.cos(t+off),y:cy+r*Math.sin(t+off),r,t};
+}
+function nR(i,n,m,sc){
+  const t=m.tMin+(i/n)*(m.tMax-m.tMin),tN=m.tMin+((i+1)/n)*(m.tMax-m.tMin);
+  return Math.min(6,Math.max(2.5,m.a*Math.exp(m.b*t)*sc*(tN-t)*.32));
+}
+
+// ── ENCODE ─────────────────────────────────────────────
+function encode(text,mn){
+  const m=MODES[mn],pl=new TextEncoder().encode(text);
+  if(pl.length>m.max) return {ok:false,err:`Maks ${m.max} karakter`};
+  const mi={LITE:0,STANDARD:1,DENSE:2}[mn],crc=crc16(pl);
+  const hdr=[0xAD,mi,pl.length,(crc>>8)&0xFF,crc&0xFF];
+  const bytes=[...hdr,...pl],bits=[];
+  for(const b of bytes) for(let i=7;i>=0;i--) bits.push((b>>i)&1);
+  const arms=[new Array(m.n).fill(0),new Array(m.n).fill(0),new Array(m.n).fill(0)];
+  for(let i=0;i<bits.length;i++){const a=i%3,p=Math.floor(i/3);if(p<m.n)arms[a][p]=bits[i];}
+  return {ok:true,arms,mn,text,bits,total:bits.length};
+}
+
+// ── DECODE ARMS ─────────────────────────────────────────
+function decodeArms(arms,mn){
+  const m=MODES[mn],n=m.n,bits=[];
+  for(let p=0;p<n;p++) for(let a=0;a<3;a++) bits.push(arms[a][p]);
+  const bytes=[];
+  for(let i=0;i+7<bits.length;i+=8){let b=0;for(let j=0;j<8;j++)b=(b<<1)|(bits[i+j]&1);bytes.push(b);}
+  if(bytes[0]!==0xAD) return {ok:false};
+  const pl=bytes.slice(5,5+bytes[2]);
+  if(pl.length<bytes[2]) return {ok:false};
+  const ok=crc16(pl)===((bytes[3]<<8)|bytes[4]);
+  let text='';try{text=new TextDecoder().decode(new Uint8Array(pl));}catch(e){}
+  return {ok,text,mn,len:bytes[2]};
+}
+
+// ── DRAW SYMBOL ─────────────────────────────────────────
+function drawSymbol(cv,arms,mn,opts={}){
+  const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;
+  const cx=W/2,cy=H/2,sc=Math.min(W,H)*.33;
+  const m=MODES[mn]||MODES.STANDARD,n=m.n;
+  const oR=Math.min(W,H)*ORBIT_R_RATIO;
+  const layer=opts.layer||'all',aoff=opts.aoff||0;
+  const sA=layer==='all';
+  const shOrbit=sA||layer==='orbit'||layer==='anchor'||layer==='finder';
+  const shAnchor=sA||layer==='anchor';
+  const shFinder=sA||layer==='finder';
+  const shSpiral=sA||layer==='spiral';
+  const shCenter=sA||layer==='center';
+
+  ctx.fillStyle='#04040a';ctx.fillRect(0,0,W,H);
+
+  // ── ORBIT RING ──
+  if(shOrbit){
+    // Outer subtle ring
+    ctx.beginPath();ctx.arc(cx,cy,oR+6,0,Math.PI*2);
+    ctx.strokeStyle='#c8a84012';ctx.lineWidth=.8;ctx.stroke();
+    // Main orbit ring
+    ctx.beginPath();ctx.arc(cx,cy,oR,0,Math.PI*2);
+    ctx.strokeStyle='#c8a84060';ctx.lineWidth=1.5;ctx.stroke();
+    // Inner subtle ring
+    ctx.beginPath();ctx.arc(cx,cy,oR-5,0,Math.PI*2);
+    ctx.strokeStyle='#c8a84018';ctx.lineWidth=.6;ctx.stroke();
+  }
+
+  // ── DATA MAX RING ──
+  if(shSpiral){
+    ctx.beginPath();ctx.arc(cx,cy,Math.min(W,H)*DATA_MAX_RATIO,0,Math.PI*2);
+    ctx.strokeStyle='#47e8ff0c';ctx.lineWidth=.5;ctx.stroke();
+  }
+
+  // ── SPIRAL ARMS ──
+  if(shSpiral){
+    [aoff,aoff+2*Math.PI/3,aoff+4*Math.PI/3].forEach((off,ai)=>{
+      ctx.beginPath();
+      for(let i=0;i<n;i++){const p=spt(i,n,off,cx,cy,sc,m);i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y);}
+      ctx.strokeStyle='#47e8ff0d';ctx.lineWidth=.7;ctx.stroke();
+      if(!arms) return;
+      for(let i=0;i<n;i++){
+        if(arms[ai][i]!==1) continue;
+        const p=spt(i,n,off,cx,cy,sc,m),r=nR(i,n,m,sc);
+        ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);
+        ctx.fillStyle='#47e8ffcc';ctx.shadowColor='#47e8ff';ctx.shadowBlur=5;ctx.fill();ctx.shadowBlur=0;
+      }
+    });
+  }
+
+  // ── FINDER @ 120°, 240° (2-ring) ──
+  if(shFinder){
+    [2*Math.PI/3,4*Math.PI/3].forEach(off=>{
+      const fx=cx+oR*Math.cos(off),fy=cy+oR*Math.sin(off);
+      if(sA||layer==='orbit'){
+        ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(fx,fy);
+        ctx.strokeStyle='#c8a84016';ctx.lineWidth=.5;ctx.setLineDash([2,8]);ctx.stroke();ctx.setLineDash([]);
+      }
+      // Dark background ring (important for ring pattern detection)
+      ctx.beginPath();ctx.arc(fx,fy,FINDER_RINGS[0]+4,0,Math.PI*2);
+      ctx.fillStyle='#04040a';ctx.fill();
+      // 2 rings
+      FINDER_RINGS.forEach((r,ri)=>{
+        ctx.beginPath();ctx.arc(fx,fy,r,0,Math.PI*2);
+        ctx.strokeStyle=ri===0?'#c8a84055':'#c8a840cc';ctx.lineWidth=1.5;ctx.stroke();
+      });
+      // Core
+      ctx.beginPath();ctx.arc(fx,fy,3,0,Math.PI*2);
+      ctx.fillStyle='#c8a840';ctx.shadowColor='#c8a840';ctx.shadowBlur=6;ctx.fill();ctx.shadowBlur=0;
+    });
+  }
+
+  // ── ANCHOR @ 0° (3-ring) ──
+  if(shAnchor){
+    const ax=cx+oR*Math.cos(aoff),ay=cy+oR*Math.sin(aoff);
+    if(sA||layer==='orbit'){
+      ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(ax,ay);
+      ctx.strokeStyle='#ffffff12';ctx.lineWidth=.5;ctx.setLineDash([2,8]);ctx.stroke();ctx.setLineDash([]);
+    }
+    // Dark background (ring isolation)
+    ctx.beginPath();ctx.arc(ax,ay,ANCHOR_RINGS[0]+4,0,Math.PI*2);
+    ctx.fillStyle='#04040a';ctx.fill();
+    // 3 rings
+    ANCHOR_RINGS.forEach((r,ri)=>{
+      ctx.beginPath();ctx.arc(ax,ay,r,0,Math.PI*2);
+      ctx.strokeStyle=['#ffffff22','#ffffff55','#ffffffaa'][ri];ctx.lineWidth=1.5;ctx.stroke();
+    });
+    // Core gradient
+    const g=ctx.createRadialGradient(ax,ay,0,ax,ay,5);
+    g.addColorStop(0,'#fff');g.addColorStop(1,'#ffe898');
+    ctx.beginPath();ctx.arc(ax,ay,5,0,Math.PI*2);
+    ctx.shadowColor='#fff';ctx.shadowBlur=16;ctx.fillStyle=g;ctx.fill();ctx.shadowBlur=0;
+  }
+
+  // ── PUSAT ──
+  if(shCenter){
+    const pg=ctx.createRadialGradient(cx,cy,0,cx,cy,28);
+    pg.addColorStop(0,'#c0a0ff1e');pg.addColorStop(1,'transparent');
+    ctx.beginPath();ctx.arc(cx,cy,28,0,Math.PI*2);ctx.fillStyle=pg;ctx.fill();
+    const cg=ctx.createRadialGradient(cx,cy,0,cx,cy,CENTER_R);
+    cg.addColorStop(0,'#fff');cg.addColorStop(.4,'#c0a0ff');cg.addColorStop(1,'transparent');
+    ctx.beginPath();ctx.arc(cx,cy,CENTER_R,0,Math.PI*2);
+    ctx.shadowColor='#c0a0ff';ctx.shadowBlur=18;ctx.fillStyle=cg;ctx.fill();ctx.shadowBlur=0;
+  }
+}
+
+// ── NAV ─────────────────────────────────────────────────
+function go(id,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('pg-'+id).classList.add('on');
+  el.classList.add('on');
+  if(id==='abt') abtStart();
+}
+
+// ── ENCODE PAGE ─────────────────────────────────────────
+let lastEnc=null;
+function onInput(){
+  const txt=document.getElementById('enc-in').value,mn=document.getElementById('enc-mode').value;
+  const m=MODES[mn];
+  document.getElementById('sc').textContent=txt.length;
+  document.getElementById('sn').textContent=m.n;
+  document.getElementById('enc-bx').textContent=mn;
+  const e=encode(txt,mn);
+  if(e.ok){
+    document.getElementById('sb').textContent=e.total;
+    const h=e.arms[0].slice(0,48).map(b=>`<span style="color:${b?'var(--g2)':'var(--mu)'}">${b}</span>`).join('');
+    document.getElementById('bits').innerHTML=`<span style="color:var(--mu);font-size:8px">ARM 0: </span>${h}<span style="color:var(--mu)"> …</span>`;
+    document.getElementById('enc-st').className='st ok';
+    document.getElementById('enc-st').textContent=`✓ "${txt}" → ${e.total} bits → ${m.n} nodes/arm`;
   } else {
-    rtxt.textContent = res.text || 'Decode gagal.';
-    rmeta.innerHTML = `<span style="color:var(--err)">✗ CRC error</span> · ${lastEncoded.mode}`;
+    document.getElementById('enc-st').className='st er';
+    document.getElementById('enc-st').textContent='✗ '+e.err;
+    document.getElementById('bits').innerHTML='';
+  }
+}
+function doEnc(){
+  const txt=document.getElementById('enc-in').value.trim(),mn=document.getElementById('enc-mode').value;
+  const e=encode(txt,mn);if(!e.ok)return;
+  lastEnc=e;
+  drawSymbol(document.getElementById('cv-enc'),e.arms,mn);
+  document.getElementById('sym-lbl').textContent=txt;
+}
+function prep(ev){
+  if(!lastEnc){ev.preventDefault();return;}
+  const cv=document.getElementById('cv-enc');
+  document.getElementById('dl-btn').href=cv.toDataURL('image/png');
+  document.getElementById('dl-btn').download='urip_'+lastEnc.text.replace(/[^a-zA-Z0-9]/g,'_')+'.png';
+}
+
+// ── DECODE PAGE ─────────────────────────────────────────
+function onDrop(e){
+  e.preventDefault();document.getElementById('drop').classList.remove('hl');
+  const f=e.dataTransfer.files[0];if(f)decFile(f);
+}
+function onFile(e){const f=e.target.files[0];if(f)decFile(f);}
+function decFile(file){
+  const r=new FileReader();
+  r.onload=ev=>{
+    const img=new Image();
+    img.onload=()=>{
+      const cv=document.getElementById('cv-dec'),ctx=cv.getContext('2d');
+      cv.width=280;cv.height=280;
+      ctx.drawImage(img,0,0,280,280);
+      runDec(ctx,280,280);
+    };
+    img.src=ev.target.result;
+  };
+  r.readAsDataURL(file);
+}
+
+function smpA(d,W,H,px,py,rad){
+  let s=0,c=0;const r=Math.max(2,Math.round(rad));
+  for(let dy=-r;dy<=r;dy++) for(let dx=-r;dx<=r;dx++){
+    if(dx*dx+dy*dy>r*r) continue;
+    const x=Math.round(px+dx),y=Math.round(py+dy);
+    if(x>=0&&x<W&&y>=0&&y<H){const i=(y*W+x)*4;s+=(d[i]+d[i+1]+d[i+2])/3;c++;}
+  }
+  return c?s/c:0;
+}
+function otsu(d,W,H){
+  const h=new Array(256).fill(0);let tot=0;
+  for(let y=0;y<H;y+=2) for(let x=0;x<W;x+=2){const i=(y*W+x)*4;h[Math.round((d[i]+d[i+1]+d[i+2])/3)]++;tot++;}
+  let s=0;for(let i=0;i<256;i++)s+=i*h[i];
+  let sB=0,wB=0,mx=0,t=128;
+  for(let i=0;i<256;i++){wB+=h[i];if(!wB)continue;const wF=tot-wB;if(!wF)break;sB+=i*h[i];const v=wB*wF*(sB/wB-(s-sB)/wF)**2;if(v>mx){mx=v;t=i;}}
+  return t;
+}
+
+// FIND ANCHOR — scan orbit ring for brightest 3-ring pattern
+function findAnchor(d,W,H){
+  const oR=Math.min(W,H)*ORBIT_R_RATIO;
+  const cx=W/2,cy=H/2;
+  let bestScore=-1,bestAngle=0;
+  // Scan 360° along orbit ring
+  for(let deg=0;deg<360;deg+=2){
+    const rad=deg*Math.PI/180;
+    const ax=cx+oR*Math.cos(rad),ay=cy+oR*Math.sin(rad);
+    // Score = brightness at core, dark gap, bright ring — 3-ring signature
+    const core=smpA(d,W,H,ax,ay,4);
+    const mid=smpA(d,W,H,ax+8,ay,2); // offset sample for ring gap
+    const outer=smpA(d,W,H,ax,ay,14)-smpA(d,W,H,ax,ay,8); // outer ring
+    const score=core+outer*0.5;
+    if(score>bestScore){bestScore=score;bestAngle=rad;}
+  }
+  return {angle:bestAngle, cx:cx+oR*Math.cos(bestAngle), cy:cy+oR*Math.sin(bestAngle), score:bestScore};
+}
+
+function runDec(ctx,W,H){
+  const d=ctx.getImageData(0,0,W,H).data;
+  const th=otsu(d,W,H);
+  const cx=W/2,cy=H/2;
+  const sc=Math.min(W,H)*.33;
+
+  document.getElementById('dec-st').className='st wn';
+  document.getElementById('dec-st').textContent='⟳ scanning orbit ring...';
+
+  // Try to find anchor for rotation reference
+  const anchor=findAnchor(d,W,H);
+  const rotOffset=anchor.score>th*0.5 ? anchor.angle : 0;
+
+  // Draw scan overlay
+  const cvs=document.getElementById('cv-scan'),ctxs=cvs.getContext('2d');
+  cvs.width=240;cvs.height=240;
+  const sf=240/W;
+  ctxs.fillStyle='#04040a';ctxs.fillRect(0,0,240,240);
+  ctxs.drawImage(ctx.canvas,0,0,240,240);
+  // Show orbit ring
+  ctxs.beginPath();ctxs.arc(cx*sf,cy*sf,Math.min(W,H)*ORBIT_R_RATIO*sf,0,Math.PI*2);
+  ctxs.strokeStyle='#c8a84066';ctxs.lineWidth=1;ctxs.stroke();
+  // Show detected anchor
+  const axd=anchor.cx*sf,ayd=anchor.cy*sf;
+  ctxs.beginPath();ctxs.arc(axd,ayd,8,0,Math.PI*2);
+  ctxs.strokeStyle='#fff';ctxs.lineWidth=1.5;ctxs.stroke();
+  ctxs.font='7px IBM Plex Mono';ctxs.fillStyle='#ffffff88';ctxs.textAlign='center';
+  ctxs.fillText('ANCHOR',axd,ayd-12);
+
+  document.getElementById('dec-st').className='st wn';
+  document.getElementById('dec-st').textContent='⟳ decoding spiral...';
+
+  let found=null;
+  const scales=[sc,sc*.96,sc*1.04,sc*.92,sc*1.08];
+  const thresholds=[th,th*.75,th*.6,th*1.1];
+  const rotOffsets=[rotOffset,0,Math.PI/6,-Math.PI/6];
+
+  outer:
+  for(const mn of ['LITE','STANDARD','DENSE']){
+    const m=MODES[mn],n=m.n;
+    for(const s of scales){
+      for(const t of thresholds){
+        for(const roff of rotOffsets){
+          const arms=[[],[],[]];
+          [roff,roff+2*Math.PI/3,roff+4*Math.PI/3].forEach((off,ai)=>{
+            for(let i=0;i<n;i++){
+              const p=spt(i,n,off,cx,cy,s,m),r=Math.max(2,nR(i,n,m,s)*.85);
+              arms[ai].push(smpA(d,W,H,p.x,p.y,r)>t?1:0);
+            }
+          });
+          const res=decodeArms(arms,mn);
+          if(res.ok){found=res;break outer;}
+        }
+      }
+    }
+  }
+
+  if(found){
+    document.getElementById('dec-res').textContent=found.text;
+    document.getElementById('dec-meta').innerHTML=`<span style="color:var(--ok)">✓ CRC OK</span> · ${found.mn} · ${found.len} bytes`;
+    document.getElementById('dec-st').className='st ok';
+    document.getElementById('dec-st').textContent='✓ Decode berhasil';
+    // Mark successful arms on overlay
+    ctxs.font='7px IBM Plex Mono';ctxs.fillStyle='var(--ok)';ctxs.textAlign='center';
+    ctxs.fillText('✓ '+found.text,120,228);
+  } else {
+    document.getElementById('dec-res').textContent='—';
+    document.getElementById('dec-meta').textContent='tidak terbaca';
+    document.getElementById('dec-st').className='st er';
+    document.getElementById('dec-st').textContent='✗ Gagal — gunakan PNG yang di-download dari app ini';
   }
 }
 
-// ══════════════════════════════════════════════════════════
-// MANUAL DECODE
-// ══════════════════════════════════════════════════════════
-function setManualMode(m, el) {
-  manualMode = m;
-  document.querySelectorAll('#manual-mode-row .mbtn').forEach(b => b.classList.remove('active'));
-  el.classList.add('active');
+// ── ABOUT PAGE ──────────────────────────────────────────
+let abtLayer='all',abtAoff=0,abtAF=null;
+const abtTxt={
+  all:'<strong style="color:var(--tx)">UR-IP v9 · Orbit Ring Architecture</strong><br>Orbit luar = referensi tetap (Anchor + Finder). Spiral dalam = data. Pusat = ruang informasi.<br>Semakin kompleks informasi, semakin besar O yang dibutuhkan — bukan simbol yang disederhanakan.',
+  anchor:'<strong style="color:#fff">ANCHOR — 3-ring · 0°</strong><br>Paling besar, paling terang. Tidak bisa dikira data node atau finder.<br>Decoder cari ini pertama → dapat center, scale, rotasi referensi. Zero sweep.',
+  finder:'<strong style="color:var(--gold)">FINDER — 2-ring · 120° & 240°</strong><br>Konfirmasi triangulasi. Bersama Anchor → 3 titik = solved.<br>2-ring pattern tidak muncul di data spiral secara kebetulan.',
+  orbit:'<strong>ORBIT RING</strong><br>Lingkaran yang menghubungkan Anchor & Finder di radius konstan.<br>Decoder detect lingkaran ini → dapat center langsung tanpa hitung centroid.<br>Orbit bukan connector. Orbit adalah referensi itu sendiri.',
+  spiral:'<strong style="color:var(--cy)">SPIRAL — 3 arm data</strong><br>Carrier wave informasi. Selalu di orbit dalam (r≤0.37).<br>Tidak pernah menyentuh orbit Anchor/Finder. Dua dimensi berbeda.',
+  center:'<strong style="color:var(--vi)">PUSAT — Ruang Data</strong><br>Observer ada di sini. Bukan hiasan — ini titik dari mana semua spiral memancar.<br>Seperti inti atom, seperti pusat galaksi: energi tertinggi, paling stabil.',
+};
+let demoArms=(()=>{const e=encode('SYKLUS','STANDARD');return e.ok?e.arms:[[],[],[]]})();
+function setLay(l,el){
+  abtLayer=l;
+  document.querySelectorAll('.lay').forEach(e=>e.classList.remove('on'));
+  if(el)el.classList.add('on');
+  document.getElementById('abt-lbl').textContent={all:'Semua',anchor:'Anchor',finder:'Finder',orbit:'Orbit Ring',spiral:'Spiral',center:'Pusat'}[l]||l;
+  document.getElementById('abt-info').innerHTML=abtTxt[l]||'';
+  renderAbt();
 }
-
-function manualDecode() {
-  const rawBits = document.getElementById('manual-bits').value.replace(/[^01]/g,'');
-  if (!rawBits) return;
-  const bits = rawBits.split('').map(Number);
-  const n = Math.floor(bits.length / 3);
-  const arms = [bits.filter((_,i)=>i%3===0).slice(0,n), bits.filter((_,i)=>i%3===1).slice(0,n), bits.filter((_,i)=>i%3===2).slice(0,n)];
-  try {
-    const result = URIP.decode(arms, manualMode);
-    document.getElementById('manual-out').textContent = result.text || '[empty]';
-    document.getElementById('manual-meta').innerHTML = `CRC: <span style="color:var(--${result.crcOk?'ok':'err'})">${result.crcOk?'✓':'✗'}</span> &nbsp; OK: <span style="color:var(--${result.ok?'ok':'err'})">${result.ok?'✓':'✗'}</span>`;
-  } catch(e) {
-    document.getElementById('manual-out').textContent = '⚠ ' + e.message;
-  }
+function setDemo(w,el){
+  document.querySelectorAll('#pg-abt .btn').forEach(b=>b.classList.remove('p'));
+  el.classList.add('p');
+  const e=encode(w,'STANDARD');if(e.ok)demoArms=e.arms;
+  renderAbt();
 }
-
-// ══════════════════════════════════════════════════════════
-// TEST
-// ══════════════════════════════════════════════════════════
-function runTest() {
-  const text = document.getElementById('test-input').value.trim();
-  if (!text) return;
-  const mode = URIP.autoMode(text);
-  try {
-    const encoded = URIP.encode(text, mode);
-    const decoded = URIP.decode(encoded.arms, mode);
-    const match = decoded.text === text;
-    document.getElementById('test-result').innerHTML = `
-      <span style="color:var(--muted)">Input:</span> <span style="color:var(--text)">${text}</span><br>
-      <span style="color:var(--muted)">Mode:</span> <span style="color:var(--gold)">${mode}</span><br>
-      <span style="color:var(--muted)">Bits:</span> <span style="color:var(--ok)">${encoded.totalBits}</span><br>
-      <span style="color:var(--muted)">Decoded:</span> <span style="color:var(--text)">${decoded.text}</span><br>
-      <span style="color:var(--muted)">CRC:</span> <span style="color:var(--${decoded.crcOk?'ok':'err'})">${decoded.crcOk?'✓':'✗'}</span><br>
-      <span style="color:var(--muted)">Match:</span> <span style="color:var(--${match?'ok':'err'})">${match?'✓ Sempurna!':'✗ Tidak match'}</span>
-    `;
-  } catch(e) {
-    document.getElementById('test-result').innerHTML = `<span style="color:var(--err)">⚠ ${e.message}</span>`;
-  }
+function renderAbt(){
+  const c1=document.getElementById('cv-a1'),c2=document.getElementById('cv-a2');
+  if(!c1||!c2) return;
+  drawSymbol(c1,demoArms,'STANDARD',{layer:'all',aoff:abtAoff});
+  drawSymbol(c2,demoArms,'STANDARD',{layer:abtLayer,aoff:abtAoff});
 }
+function abtLoop(){
+  if(!document.getElementById('pg-abt').classList.contains('on')){abtAF=null;return;}
+  abtAoff+=.005;renderAbt();
+  abtAF=requestAnimationFrame(abtLoop);
+}
+function abtStart(){if(!abtAF)abtLoop();}
 
-// ══════════════════════════════════════════════════════════
-// INIT
-// ══════════════════════════════════════════════════════════
-URIP.drawEmpty(document.getElementById('gen-canvas'), 'gold');
-document.getElementById('gen-input').addEventListener('keydown', e => { if(e.key==='Enter'&&e.ctrlKey) generate(); });
-
-// Drag & drop
-const uzone = document.getElementById('uzone');
-uzone.addEventListener('dragover', e => { e.preventDefault(); uzone.style.borderColor='var(--gold)'; });
-uzone.addEventListener('dragleave', () => { uzone.style.borderColor=''; });
-uzone.addEventListener('drop', e => {
-  e.preventDefault(); uzone.style.borderColor='';
-  const file = e.dataTransfer.files[0];
-  if (file) { document.getElementById('filePick').files; const dt = new DataTransfer(); dt.items.add(file); document.getElementById('filePick').files = dt.files; document.getElementById('filePick').onchange({ target: { files: [file] } }); }
-});
+// ── INIT ────────────────────────────────────────────────
+onInput();doEnc();
+setInterval(()=>{if(document.getElementById('pg-abt').classList.contains('on')&&!abtAF)abtStart();},300);
 </script>
 </body>
 </html>
