@@ -472,10 +472,18 @@ const R_PDOM = Math.max(R_A2, R_B2);
 const R_S = Math.abs(R_C - R_PDOM);                         // 0.3432
 const R_XOR = 20;            // XOR halves — inner symmetry key
 const R_HEADER = [0x69, 0x7D]; // 27005 resonance marker bytes
-const R_NOISE = 1 - R_C;    // 0.0318 — noise sejati = 1/(10π)
-                             // jarak tepat antara observer dan collapsed
-                             // arm offset = R_NOISE × 2π = 11.448°
+const R_NOISE = 1 - R_C;    // 0.0318 — noise sejati = 1/(10π) = spiral curvature
 const R_NOISE_DEG = R_NOISE * 2 * Math.PI; // 0.1998 rad = 11.448°
+
+// ── PLASMA SPIRAL NUCLEUS ────────────────────────────────
+// r(θ) = 105 × e^(0.0318 × θ)
+const PLASMA_NUCLEUS = 105;           // 3×5×7 — origin semua
+const SPIRAL_B       = R_NOISE;       // 0.0318 = curvature
+const THETA_749      = 61.7855;       // 749   @ 9.83 putaran
+const THETA_27005    = 174.5225;      // 27005 @ 27.77 putaran
+const GROWTH_FACTOR  = 1.2212;        // e^(2π×0.0318) per putaran
+// 105 → 749 → 27005 lahir dari spiral ini
+// Plasma nucleus (10^5 K) → shell 1 → shell 2
 
 const MODES = {
   LITE:     {n:48, max:11, tMin:.5, tMax:5.5*Math.PI,  a:.14*R_C,  b:.108*(R_RATIO/1.618)},
