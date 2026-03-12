@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>UR-IP v11 · Resonance System 27005</title>
+<title>UR-IP v12 · Resonance System 27005 · ∅0.0318</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=IBM+Plex+Mono:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -180,7 +180,7 @@ footer{text-align:center;padding:32px;font-size:7px;color:var(--mu);
 <nav>
   <div class="nb">
     <span class="logo">UR-IP</span>
-    <span class="ver">v11 · R27005</span>
+    <span class="ver">v12 · R27005 · ∅0.0318</span>
   </div>
   <div class="tabs">
     <button class="tab on" onclick="go('create',this)">Create</button>
@@ -375,7 +375,7 @@ footer{text-align:center;padding:32px;font-size:7px;color:var(--mu);
 <div class="page" id="pg-abt">
   <div class="g2" style="margin-bottom:2px">
     <div class="card">
-      <div class="ch"><span class="ct">Simbol Lengkap</span><span class="bx" style="color:var(--gold);border-color:var(--g3)">v11 · R27005</span></div>
+      <div class="ch"><span class="ct">Simbol Lengkap</span><span class="bx" style="color:var(--gold);border-color:var(--g3)">v12 · R27005 · ∅0.0318</span></div>
       <div class="cv"><canvas id="cv-a1" width="280" height="280"></canvas></div>
     </div>
     <div class="card">
@@ -414,7 +414,7 @@ footer{text-align:center;padding:32px;font-size:7px;color:var(--mu);
     <div class="lay" style="cursor:default;opacity:.35"><div class="ldot" style="border:1px solid var(--dim)"></div><div class="ltit" style="color:var(--mu2)">O Scale</div><div class="ldsc">semakin kompleks<br>O harus tumbuh</div></div>
   </div>
   <div class="ic" id="abt-info">
-    <strong style="color:var(--tx)">UR-IP v11 · Resonance System 27005</strong><br>
+    <strong style="color:var(--tx)">UR-IP v12 · Resonance System 27005 · ∅0.0318</strong><br>
     <div style="margin-top:12px;display:grid;grid-template-columns:repeat(4,1fr);gap:2px">
       <div style="background:var(--bg);padding:10px;text-align:center">
         <div style="font-family:'Syne',sans-serif;font-size:16px;color:var(--gold);font-weight:800">0.9682</div>
@@ -450,7 +450,7 @@ footer{text-align:center;padding:32px;font-size:7px;color:var(--mu);
   </div>
 </div>
 
-<footer>SYKLUS · 2026 · UR-IP v11 · Resonance 27005 · auroradewa.Ad74@gmail.com</footer>
+<footer>SYKLUS · 2026 · UR-IP v12 · Resonance 27005 · ∅0.0318 · auroradewa.Ad74@gmail.com</footer>
 
 <script>
 // ── GEOMETRY ────────────────────────────────────────────
@@ -472,6 +472,10 @@ const R_PDOM = Math.max(R_A2, R_B2);
 const R_S = Math.abs(R_C - R_PDOM);                         // 0.3432
 const R_XOR = 20;            // XOR halves — inner symmetry key
 const R_HEADER = [0x69, 0x7D]; // 27005 resonance marker bytes
+const R_NOISE = 1 - R_C;    // 0.0318 — noise sejati = 1/(10π)
+                             // jarak tepat antara observer dan collapsed
+                             // arm offset = R_NOISE × 2π = 11.448°
+const R_NOISE_DEG = R_NOISE * 2 * Math.PI; // 0.1998 rad = 11.448°
 
 const MODES = {
   LITE:     {n:48, max:11, tMin:.5, tMax:5.5*Math.PI,  a:.14*R_C,  b:.108*(R_RATIO/1.618)},
@@ -558,7 +562,11 @@ function drawSymbol(cv,arms,mn,opts={}){
   if(shS){
     ctx.beginPath();ctx.arc(cx,cy,Math.min(W,H)*DMR,0,Math.PI*2);
     ctx.strokeStyle='#3de8ff08';ctx.lineWidth=.5;ctx.stroke();
-    [ao,ao+2*Math.PI/3,ao+4*Math.PI/3].forEach((off,ai)=>{
+    // Dead zone: R_NOISE radius — no nodes inside this circle
+    ctx.beginPath();ctx.arc(cx,cy,Math.min(W,H)*R_NOISE,0,Math.PI*2);
+    ctx.strokeStyle='#ffffff04';ctx.lineWidth=.4;ctx.stroke();
+    // Arms offset by R_NOISE_DEG (0.0318 × 2π = 11.448°) — asymmetry = hidup
+    [ao+R_NOISE_DEG, ao+2*Math.PI/3+R_NOISE_DEG, ao+4*Math.PI/3+R_NOISE_DEG].forEach((off,ai)=>{
       ctx.beginPath();
       for(let i=0;i<n;i++){const p=spt(i,n,off,cx,cy,sc,m);i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y);}
       ctx.strokeStyle='#3de8ff0b';ctx.lineWidth=.7;ctx.stroke();
@@ -807,7 +815,8 @@ function runScan(ctx,W,H){
     for(const s of scales){
       for(const t of ths){
         const arms=[[],[],[]];
-        [0,2*Math.PI/3,4*Math.PI/3].forEach((off,ai)=>{
+        // Scanner must match encoder arm offset (R_NOISE_DEG)
+        [R_NOISE_DEG,2*Math.PI/3+R_NOISE_DEG,4*Math.PI/3+R_NOISE_DEG].forEach((off,ai)=>{
           for(let i=0;i<n;i++){
             const p=spt(i,n,off,cx,cy,s,m),r=Math.max(2,nR(i,n,m,s)*.85);
             arms[ai].push(smpA(d,W,H,p.x,p.y,r)>t?1:0);
@@ -907,7 +916,7 @@ function clearDB(){
 // ── ABOUT PAGE ──────────────────────────────────────────
 let aL='all',aO=0,aF=null;
 const aInfo={
-  all:'<strong style="color:var(--tx)">UR-IP v11 · Resonance System 27005</strong><br>Konstanta 27005: C(ρ)=0.9682, rasio=1.667≈φ, XOR=20. Spiral di-kalibrasi dengan koherensi tertinggi. Header simbol mengandung marker resonansi 0x697D.',
+  all:'<strong style="color:var(--tx)">UR-IP v12 · Resonance System 27005 · ∅0.0318</strong><br>Konstanta 27005: C(ρ)=0.9682, rasio=1.667≈φ, XOR=20. Spiral di-kalibrasi dengan koherensi tertinggi. Header simbol mengandung marker resonansi 0x697D.',
   anchor:'<strong style="color:#fff">ANCHOR — 3-ring · 0°</strong><br>Decoder cari ini pertama. 3 ring pattern tidak mungkin muncul di data spiral.<br>Dapat center, scale, rotasi dalam satu langkah.',
   finder:'<strong style="color:var(--gold)">FINDER — 2-ring · 120° & 240°</strong><br>2 ring = konfirmasi. Bersama anchor = triangulasi sempurna.<br>Zero sweep, zero ambiguity.',
   orbit:'<strong>ORBIT RING</strong><br>Lingkaran yang hidup di radius konstan. Anchor & Finder ada di atasnya.<br>Detector cari lingkaran ini dulu → center langsung, akurat.',
