@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>✦ UR-IP · Stat (powered by URIP)</title>
+<title>✦ UR-IP · Stat Analyzer v2</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{background:#04040a;color:#ffe898;font-family:'Courier New',monospace;min-height:100vh;padding-bottom:60px}
@@ -117,6 +117,7 @@ textarea::placeholder{color:#c8a84044}
 .verdict{text-align:center;padding:16px;font-size:11px;line-height:2;margin-top:8px}
 .v-big{font-size:32px;font-weight:bold;display:block;margin-bottom:4px}
 </style>
+<script src="uriplib.js"></script>
 </head>
 <body>
 
@@ -128,6 +129,7 @@ textarea::placeholder{color:#c8a84044}
 <div class="tabs" style="display:flex;justify-content:center;border-bottom:1px solid #c8a84022;margin-bottom:0">
   <button id="tab-stat" onclick="switchTab('stat')" style="padding:10px 14px;font-size:9px;letter-spacing:3px;cursor:pointer;opacity:1;border:none;border-bottom:2px solid #c8a840;background:none;color:#c8a840;font-family:'Courier New',monospace">ANALISIS</button>
   <button id="tab-ft" onclick="switchTab('ft')" style="padding:10px 14px;font-size:9px;letter-spacing:3px;cursor:pointer;opacity:.3;border:none;border-bottom:2px solid transparent;background:none;color:#ffe898;font-family:'Courier New',monospace">FORWARD TEST</button>
+  <button id="tab-syklus" onclick="switchTab('syklus')" style="padding:10px 14px;font-size:9px;letter-spacing:3px;cursor:pointer;opacity:.3;border:none;border-bottom:2px solid transparent;background:none;color:#ffe898;font-family:'Courier New',monospace">SYKLUS COORD</button>
 </div>
 <div class="wrap" id="page-stat">
 
@@ -446,19 +448,98 @@ loadSample();
   <button class="btn ghost" onclick="clearResults()" style="margin-top:4px">✕ Reset Tracker</button>
 </div>
 
+<!-- ══ SYKLUS COORD TAB ══ -->
+<div id="page-syklus" style="display:none;max-width:600px;margin:0 auto;padding:20px 16px;position:relative;z-index:1">
+  <div class="card">
+    <h3>SYKLUS Coordinate Mapper</h3>
+    <span class="lbl">Paste text / ID / nomor (satu per baris)</span>
+    <textarea id="syklus-input" placeholder="PRD-A1B2C3-D4E5F6-G7H8&#10;SYKLUS&#10;hello world&#10;34720"></textarea>
+    <br><br>
+    <button class="btn" onclick="runSyklusMap()">✦ MAP TO SYKLUS SPACE</button>
+  </div>
+  <div id="syklus-output" style="display:none">
+    <div class="card">
+      <h3>Koordinat SYKLUS · r(θ) = e^(0.0318·θ)</h3>
+      <div style="font-size:8px;opacity:.3;letter-spacing:2px;margin-bottom:12px">Pancer = 0.0318 · 18-digit spatial coordinate</div>
+      <div id="syklus-rows"></div>
+    </div>
+    <div class="card">
+      <h3>Distribusi Theta</h3>
+      <div id="syklus-theta-dist"></div>
+    </div>
+  </div>
+</div>
+
 <script>
-// ── TAB SWITCH ──
+// ── TAB SWITCH (extended) ──
 function switchTab(t) {
-  document.getElementById('page-stat').style.display = t==='stat' ? 'block' : 'none';
-  document.getElementById('page-ft').style.display = t==='ft' ? 'block' : 'none';
-  document.getElementById('tab-stat').style.opacity = t==='stat' ? '1' : '.3';
-  document.getElementById('tab-ft').style.opacity = t==='ft' ? '1' : '.3';
-  document.getElementById('tab-stat').style.borderBottomColor = t==='stat' ? '#c8a840' : 'transparent';
-  document.getElementById('tab-ft').style.borderBottomColor = t==='ft' ? '#c8a840' : 'transparent';
-  document.getElementById('tab-stat').style.color = t==='stat' ? '#c8a840' : '#ffe898';
-  document.getElementById('tab-ft').style.color = t==='ft' ? '#c8a840' : '#ffe898';
+  ['stat','ft','syklus'].forEach(id => {
+    const page = document.getElementById('page-'+id);
+    const tab  = document.getElementById('tab-'+id);
+    if (!page || !tab) return;
+    const on = t === id;
+    page.style.display = on ? 'block' : 'none';
+    tab.style.opacity  = on ? '1' : '.3';
+    tab.style.borderBottomColor = on ? '#c8a840' : 'transparent';
+    tab.style.color    = on ? '#c8a840' : '#ffe898';
+  });
 }
 
+// ── SYKLUS COORD ──
+function runSyklusMap() {
+  if (typeof URIP === 'undefined') {
+    alert('uriplib.js tidak ter-load. Pastikan file ada satu folder.');
+    return;
+  }
+  const lines = document.getElementById('syklus-input').value
+    .split(/\n/).map(s=>s.trim()).filter(Boolean);
+  if (!lines.length) { alert('Input kosong!'); return; }
+
+  const rows = lines.map(text => {
+    const c = URIP.syklusCoord(text);
+    return { text, ...c };
+  });
+
+  document.getElementById('syklus-output').style.display = 'block';
+
+  // Table rows
+  document.getElementById('syklus-rows').innerHTML = rows.map(r => `
+    <div style="border:1px solid #c8a84022;padding:10px;margin-bottom:4px">
+      <div style="font-size:8px;letter-spacing:2px;opacity:.4;margin-bottom:4px">${r.text}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px">
+        <div style="background:#080600;padding:8px">
+          <div style="font-size:7px;opacity:.3;letter-spacing:2px;margin-bottom:3px">FORWARD (18d)</div>
+          <div style="font-size:11px;color:#c8a840;letter-spacing:2px">${r.forward}</div>
+        </div>
+        <div style="background:#080600;padding:8px">
+          <div style="font-size:7px;opacity:.3;letter-spacing:2px;margin-bottom:3px">REVERSE (18d)</div>
+          <div style="font-size:11px;color:#47ffe0;letter-spacing:2px">${r.reverse}</div>
+        </div>
+      </div>
+      <div style="font-size:8px;opacity:.4;margin-top:6px;letter-spacing:1px">θ = ${r.theta} · r_fwd = ${Math.exp(0.0318*r.theta).toFixed(4)} · r_rev = ${Math.exp(-0.0318*r.theta).toFixed(4)}</div>
+    </div>
+  `).join('');
+
+  // Theta distribution (simple bar chart using existing bar CSS)
+  const thetas = rows.map(r => r.theta);
+  const bins = new Array(10).fill(0); // [-50,-40,...,40,50]
+  thetas.forEach(t => {
+    const bi = Math.min(9, Math.floor((t + 50) / 10));
+    bins[bi]++;
+  });
+  const maxBin = Math.max(...bins, 1);
+  document.getElementById('syklus-theta-dist').innerHTML =
+    bins.map((cnt, i) => {
+      const lo = -50 + i*10, hi = lo + 10;
+      const pct = (cnt/maxBin)*100;
+      return `<div class="bar-row">
+        <div class="bar-digit" style="width:40px;font-size:8px">${lo}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%"></div></div>
+        <div class="bar-val">${cnt}</div>
+      </div>`;
+    }).join('');
+}
+</script>
 // ── FORWARD TEST STATE ──
 let ftPrediction = []; // array of predicted hot digits
 let ftResults = JSON.parse(localStorage.getItem('syklus_ft') || '[]');

@@ -1,340 +1,40 @@
 /**
- * ✦ SYKLUSLIB.JS v1.0
+ * ✦ URIPLIB.JS v4.0
  * UR-IP · Universal Recognition Information Pattern
- * Core encoding/decoding library
- * 
+ * Core encoding / decoding / drawing library
+ *
  * Recognition, bukan invention.
  * Meaning first. Function inside.
+ *
+ * Changelog v4.0:
+ * - TRUE logarithmic spiral: r = a·e^(b·θ), b=0.18 (was linear/fake)
+ * - 3-arm encoding (was 2-arm) → 50% more capacity
+ * - ULTRA mode (900 nodes/arm, ~290 byte)
+ * - syklusCoord(text) → 18-digit SYKLUS spatial coordinate
+ * - scan(canvas, mode) → decode direct from canvas, Otsu threshold
+ * - Multi-mode/angle fallback scan (auto mode)
+ * - downloadCanvas() — no race condition
+ * - setupCanvas() — DPR-aware
  */
 
 const URIP = (() => {
 
-  // ── CONSTANTS ──
-  const VERSION = '1.0';
+  // ── CONSTANTS ──────────────────────────────────────────────────────────────
+  const VERSION    = '4.0';
+  const PANCER     = 0.0318;        // EGO identity constant
+  const SPIRAL_A   = 0.15;          // visual spiral scale
+  const SPIRAL_B   = 0.18;          // visual spiral curvature
+  const ARM_COUNT  = 3;
+  const ARM_OFFSETS = [0, 2*Math.PI/3, 4*Math.PI/3];
+
   const MODES = {
-    LITE:     { nodesPerArm: 60,  totalBits: 180,  maxBytes: 18,  turns: 3.5, label: 'LITE'     },
-    STANDARD: { nodesPerArm: 150, totalBits: 450,  maxBytes: 45,  turns: 4.5, label: 'STANDARD' },
-    DENSE:    { nodesPerArm: 360, totalBits: 1080, maxBytes: 112, turns: 5.5, label: 'DENSE'    },
-    ULTRA:    { nodesPerArm: 900, totalBits: 2700, maxBytes: 290, turns: 7.0, label: 'ULTRA'    },
+    // maxBytes = floor(nodesPerArm*3/8) - 6(header) - ecSymbols
+    LITE:     { nodesPerArm:  60, tMin:0.5, tMax: 4*Math.PI, label:'LITE',     maxBytes:  12, ecSymbols:  4 },
+    STANDARD: { nodesPerArm: 150, tMin:0.5, tMax: 6*Math.PI, label:'STANDARD', maxBytes:  42, ecSymbols:  8 },
+    DENSE:    { nodesPerArm: 360, tMin:0.5, tMax: 8*Math.PI, label:'DENSE',    maxBytes: 117, ecSymbols: 12 },
+    ULTRA:    { nodesPerArm: 900, tMin:0.5, tMax:10*Math.PI, label:'ULTRA',    maxBytes: 315, ecSymbols: 16 },
   };
 
-  // ── CRC16-CCITT ──
-  function crc16(bytes) {
-    let crc = 0xFFFF;
-    for (const byte of bytes) {
-      crc ^= (byte << 8);
-      for (let i = 0; i < 8; i++) {
-        if (crc & 0x8000) crc = ((crc << 1) ^ 0x1021) & 0xFFFF;
-        else crc = (crc << 1) & 0xFFFF;
-      }
-    }
-    return crc;
-  }
-
-  // ── REED-SOLOMON (simplified GF(256), generator poly x^8+x^4+x^3+x^2+1) ──
-  const GF_EXP = new Uint8Array(512);
-  const GF_LOG = new Uint8Array(256);
-  (function initGF() {
-    let x = 1;
-    for (let i = 0; i < 255; i++) {
-      GF_EXP[i] = x;
-      GF_LOG[x] = i;
-      x <<= 1;
-      if (x & 0x100) x ^= 0x11D;
-    }
-    for (let i = 255; i < 512; i++) GF_EXP[i] = GF_EXP[i - 255];
-  })();
-
-  function gfMul(a, b) {
-    if (a === 0 || b === 0) return 0;
-    return GF_EXP[(GF_LOG[a] + GF_LOG[b]) % 255];
-  }
-
-  function rsEncode(data, nsym) {
-    // Generate generator polynomial
-    let gen = [1];
-    for (let i = 0; i < nsym; i++) {
-      const factor = [1, GF_EXP[i]];
-      const result = new Array(gen.length + factor.length - 1).fill(0);
-      for (let j = 0; j < gen.length; j++)
-        for (let k = 0; k < factor.length; k++)
-          result[j + k] ^= gfMul(gen[j], factor[k]);
-      gen = result;
-    }
-    // Polynomial division
-    const msg = [...data, ...new Array(nsym).fill(0)];
-    for (let i = 0; i < data.length; i++) {
-      const coef = msg[i];
-      if (coef !== 0)
-        for (let j = 1; j < gen.length; j++)
-          msg[i + j] ^= gfMul(gen[j], coef);
-    }
-    return msg.slice(data.length);
-  }
-
-  function rsCorrect(data, nsym) {
-    // Simplified syndrome check — detect errors
-    try {
-      const syndromes = [];
-      for (let i = 0; i < nsym; i++) {
-        let s = 0;
-        for (const b of data) s = gfMul(s, GF_EXP[i]) ^ b;
-        syndromes.push(s);
-      }
-      const hasError = syndromes.some(s => s !== 0);
-      return { data: data.slice(0, data.length - nsym), hasError };
-    } catch(e) {
-      return { data: data.slice(0, data.length - nsym), hasError: true };
-    }
-  }
-
-  // ── TEXT → BYTES ──
-  const encoder = new TextEncoder();
-  const decoder = new TextDecoder();
-
-  // ── ENCODE ──
-  function encode(text, modeName = 'STANDARD') {
-    const mode = MODES[modeName];
-    if (!mode) throw new Error(`Unknown mode: ${modeName}`);
-
-    const payload = encoder.encode(text);
-    if (payload.length > mode.maxBytes) {
-      throw new Error(`Text too long for ${modeName} mode (max ${mode.maxBytes} bytes, got ${payload.length})`);
-    }
-
-    // Header: version(8b) + mode(8b) + payloadLen(16b)
-    const header = [
-      parseInt(VERSION.replace('.','')) & 0xFF,  // version
-      Object.keys(MODES).indexOf(modeName) & 0xFF, // mode index
-      (payload.length >> 8) & 0xFF,
-      payload.length & 0xFF,
-    ];
-
-    // CRC of payload
-    const checksum = crc16(payload);
-    const crcBytes = [(checksum >> 8) & 0xFF, checksum & 0xFF];
-
-    // RS parity (8 symbols)
-    const dataBytes = [...header, ...payload, ...crcBytes];
-    const RS_NSYM = 8;
-    const parity = rsEncode(dataBytes, RS_NSYM);
-
-    // Full bitstream
-    const fullBytes = [...dataBytes, ...parity];
-    const bits = [];
-    for (const byte of fullBytes) {
-      for (let b = 7; b >= 0; b--) {
-        bits.push((byte >> b) & 1);
-      }
-    }
-
-    // Pad or truncate to totalBits
-    const target = mode.totalBits;
-    while (bits.length < target) {
-      // Pseudo-random padding from hash
-      bits.push(bits[bits.length % (bits.length || 1)] ^ 1);
-    }
-
-    return {
-      bits: bits.slice(0, target),
-      mode: modeName,
-      text,
-      payloadBytes: payload.length,
-      totalBits: target,
-      crc: checksum,
-      hash: hashText(text),
-    };
-  }
-
-  // ── DECODE ──
-  function decode(bits, modeName) {
-    try {
-      const RS_NSYM = 8;
-      // Convert bits back to bytes
-      const bytes = [];
-      for (let i = 0; i < Math.floor(bits.length / 8); i++) {
-        let byte = 0;
-        for (let b = 0; b < 8; b++) {
-          byte = (byte << 1) | (bits[i * 8 + b] || 0);
-        }
-        bytes.push(byte);
-      }
-
-      // RS correction
-      const { data, hasError } = rsCorrect(bytes, RS_NSYM);
-
-      // Parse header
-      const payloadLen = (data[2] << 8) | data[3];
-      if (payloadLen <= 0 || payloadLen > 500) return { ok: false, text: '', error: 'Invalid header' };
-
-      // Extract payload
-      const payloadBytes = data.slice(4, 4 + payloadLen);
-
-      // Verify CRC
-      const storedCRC = (data[4 + payloadLen] << 8) | data[4 + payloadLen + 1];
-      const computedCRC = crc16(payloadBytes);
-      const crcOk = storedCRC === computedCRC;
-
-      const text = decoder.decode(new Uint8Array(payloadBytes));
-
-      return {
-        ok: crcOk && !hasError,
-        text,
-        crcOk,
-        hasError,
-        payloadLen,
-        storedCRC,
-        computedCRC,
-      };
-    } catch (e) {
-      return { ok: false, text: '', error: e.message };
-    }
-  }
-
-  // ── HASH (unique rotation per text) ──
-  function hashText(text) {
-    let h = 2166136261;
-    for (let i = 0; i < text.length; i++) {
-      h ^= text.charCodeAt(i);
-      h = (h * 16777619) >>> 0;
-    }
-    return h;
-  }
-
-  // ── SPIRAL POINT ──
-  function spiralPoint(t, armOffset, turns, maxR, cx, cy, startAngle) {
-    const theta = startAngle + armOffset + t * turns * Math.PI * 2;
-    const r = maxR * (1 - t * 0.88);
-    return { x: cx + r * Math.cos(theta), y: cy + r * Math.sin(theta), r, theta };
-  }
-
-  // ── DRAW SYMBOL ──
-  function draw(canvas, encodeResult, theme = 'gold', animOffset = 0) {
-    const ctx = canvas.getContext('2d');
-    const W = canvas.width, H = canvas.height;
-    const cx = W / 2, cy = H / 2;
-    const mode = MODES[encodeResult.mode];
-    const clr = THEMES[theme] || THEMES.gold;
-    const maxR = Math.min(W, H) * 0.42;
-    const turns = mode.turns;
-    const startAngle = (encodeResult.hash % 360) * (Math.PI / 180) + animOffset;
-    const bits = encodeResult.bits;
-    const halfBits = Math.floor(bits.length / 2);
-
-    // Background
-    ctx.fillStyle = clr.bg;
-    ctx.fillRect(0, 0, W, H);
-
-    // Outer ring
-    ctx.beginPath();
-    ctx.arc(cx, cy, maxR + 18, 0, Math.PI * 2);
-    ctx.strokeStyle = clr.primary + '33';
-    ctx.lineWidth = 0.5;
-    ctx.stroke();
-
-    // Cardinal dots
-    [0, Math.PI/2, Math.PI, Math.PI*3/2].forEach(a => {
-      ctx.beginPath();
-      ctx.arc(cx + (maxR+18)*Math.cos(a), cy + (maxR+18)*Math.sin(a), 2.5, 0, Math.PI*2);
-      ctx.fillStyle = clr.primary;
-      ctx.shadowColor = clr.glow;
-      ctx.shadowBlur = 6;
-      ctx.fill();
-      ctx.shadowBlur = 0;
-    });
-
-    // Spiral guides (very dim)
-    [0, Math.PI].forEach(offset => {
-      ctx.beginPath();
-      ctx.strokeStyle = clr.primary + '0c';
-      ctx.lineWidth = 1;
-      for (let i = 0; i <= 300; i++) {
-        const p = spiralPoint(i/300, offset, turns, maxR, cx, cy, startAngle);
-        if (i === 0) ctx.moveTo(p.x, p.y);
-        else ctx.lineTo(p.x, p.y);
-      }
-      ctx.stroke();
-    });
-
-    // Two arms data
-    [
-      { armBits: bits.slice(0, halfBits), offset: 0 },
-      { armBits: bits.slice(halfBits),    offset: Math.PI },
-    ].forEach(({ armBits, offset }) => {
-      const n = armBits.length;
-      for (let i = 0; i < n; i++) {
-        const p0 = spiralPoint(i/n,       offset, turns, maxR, cx, cy, startAngle);
-        const p1 = spiralPoint((i+1)/n,   offset, turns, maxR, cx, cy, startAngle);
-        ctx.beginPath();
-        ctx.moveTo(p0.x, p0.y);
-        ctx.lineTo(p1.x, p1.y);
-        if (armBits[i] === 1) {
-          ctx.strokeStyle = clr.bright + 'cc';
-          ctx.lineWidth = 3;
-          ctx.shadowColor = clr.glow;
-          ctx.shadowBlur = 7;
-        } else {
-          ctx.strokeStyle = clr.dim;
-          ctx.lineWidth = 0.8;
-          ctx.shadowBlur = 0;
-        }
-        ctx.stroke();
-      }
-      ctx.shadowBlur = 0;
-      // Arm tip
-      const tip = spiralPoint(0, offset, turns, maxR, cx, cy, startAngle);
-      ctx.beginPath();
-      ctx.arc(tip.x, tip.y, 5, 0, Math.PI*2);
-      ctx.fillStyle = clr.primary;
-      ctx.shadowColor = clr.glow;
-      ctx.shadowBlur = 12;
-      ctx.fill();
-      ctx.shadowBlur = 0;
-    });
-
-    // Radial guides
-    [0, Math.PI/2, Math.PI, Math.PI*3/2].forEach(a => {
-      ctx.beginPath();
-      ctx.strokeStyle = clr.primary + '22';
-      ctx.lineWidth = 0.5;
-      ctx.setLineDash([2, 6]);
-      ctx.moveTo(cx + maxR*1.05*Math.cos(a), cy + maxR*1.05*Math.sin(a));
-      ctx.lineTo(cx, cy);
-      ctx.stroke();
-    });
-    ctx.setLineDash([]);
-
-    // Center glow
-    const glowRing = ctx.createRadialGradient(cx, cy, 8, cx, cy, 28);
-    glowRing.addColorStop(0, clr.primary + '44');
-    glowRing.addColorStop(1, 'transparent');
-    ctx.beginPath();
-    ctx.arc(cx, cy, 28, 0, Math.PI*2);
-    ctx.fillStyle = glowRing;
-    ctx.fill();
-
-    // Center anchor (Pancer)
-    const cGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 14);
-    cGrad.addColorStop(0, '#ffffff');
-    cGrad.addColorStop(0.4, clr.bright);
-    cGrad.addColorStop(1, clr.primary + '00');
-    ctx.beginPath();
-    ctx.arc(cx, cy, 14, 0, Math.PI*2);
-    ctx.fillStyle = cGrad;
-    ctx.shadowColor = clr.glow;
-    ctx.shadowBlur = 24;
-    ctx.fill();
-    ctx.shadowBlur = 0;
-
-    // Void ring (celah)
-    ctx.beginPath();
-    ctx.arc(cx, cy, 20, 0, Math.PI*2);
-    ctx.strokeStyle = clr.bg;
-    ctx.lineWidth = 4;
-    ctx.stroke();
-  }
-
-  // ── THEMES ──
   const THEMES = {
     gold:   { primary:'#c8a840', bright:'#ffe898', dim:'#c8a84033', bg:'#04040a', glow:'#c8a840' },
     cyan:   { primary:'#47ffe0', bright:'#a0fff0', dim:'#47ffe033', bg:'#04080a', glow:'#47ffe0' },
@@ -344,64 +44,402 @@ const URIP = (() => {
     white:  { primary:'#ccccdd', bright:'#ffffff', dim:'#ccccdd22', bg:'#060608', glow:'#aaaacc' },
   };
 
-  // ── DRAW EMPTY (placeholder) ──
-  function drawEmpty(canvas, theme = 'gold') {
-    const ctx = canvas.getContext('2d');
-    const W = canvas.width, H = canvas.height;
-    const cx = W/2, cy = H/2;
-    const clr = THEMES[theme] || THEMES.gold;
+  // ── GF(256) REED-SOLOMON ───────────────────────────────────────────────────
+  const GF_EXP = new Uint8Array(512);
+  const GF_LOG = new Uint8Array(256);
+  (function initGF() {
+    let x = 1;
+    for (let i = 0; i < 255; i++) {
+      GF_EXP[i] = x; GF_LOG[x] = i;
+      x <<= 1; if (x & 0x100) x ^= 0x11D;
+    }
+    for (let i = 255; i < 512; i++) GF_EXP[i] = GF_EXP[i-255];
+  })();
 
+  function gfMul(a, b) {
+    if (!a || !b) return 0;
+    return GF_EXP[(GF_LOG[a] + GF_LOG[b]) % 255];
+  }
+
+  function rsEncode(data, nsym) {
+    let gen = [1];
+    for (let i = 0; i < nsym; i++) {
+      const f = [1, GF_EXP[i]];
+      const r = new Array(gen.length + f.length - 1).fill(0);
+      for (let j = 0; j < gen.length; j++)
+        for (let k = 0; k < f.length; k++)
+          r[j+k] ^= gfMul(gen[j], f[k]);
+      gen = r;
+    }
+    const msg = [...data, ...new Array(nsym).fill(0)];
+    for (let i = 0; i < data.length; i++) {
+      const c = msg[i];
+      if (c) for (let j = 1; j < gen.length; j++) msg[i+j] ^= gfMul(gen[j], c);
+    }
+    return msg.slice(data.length);
+  }
+
+  function rsHasError(data, nsym) {
+    try {
+      for (let i = 0; i < nsym; i++) {
+        let s = 0;
+        for (const b of data) s = gfMul(s, GF_EXP[i]) ^ b;
+        if (s !== 0) return true;
+      }
+      return false;
+    } catch(e) { return true; }
+  }
+
+  // ── CRC16-CCITT ────────────────────────────────────────────────────────────
+  function crc16(bytes) {
+    let c = 0xFFFF;
+    for (const b of bytes) {
+      c ^= (b << 8);
+      for (let i = 0; i < 8; i++)
+        c = (c & 0x8000) ? ((c<<1)^0x1021)&0xFFFF : (c<<1)&0xFFFF;
+    }
+    return c;
+  }
+
+  // ── HASH ───────────────────────────────────────────────────────────────────
+  function hashText(text) {
+    let h = 2166136261;
+    for (let i = 0; i < text.length; i++) {
+      h ^= text.charCodeAt(i);
+      h = (h * 16777619) >>> 0;
+    }
+    return h;
+  }
+
+  // ── TEXT CODEC ─────────────────────────────────────────────────────────────
+  const _enc = new TextEncoder();
+  const _dec = new TextDecoder();
+
+  // ── ENCODE ─────────────────────────────────────────────────────────────────
+  function encode(text, modeName = 'STANDARD') {
+    const mode = MODES[modeName];
+    if (!mode) throw new Error('Unknown mode: ' + modeName);
+
+    const payload = _enc.encode(text);
+    if (payload.length > mode.maxBytes)
+      throw new Error(`Too long for ${modeName} (max ${mode.maxBytes}B, got ${payload.length}B)`);
+
+    const modeIdx = Object.keys(MODES).indexOf(modeName);
+    const crc     = crc16(payload);
+
+    // Header: version(8) + modeIdx(8) + payloadLen_hi(8) + payloadLen_lo(8) + crc_hi(8) + crc_lo(8)
+    const header    = [parseInt(VERSION)|0, modeIdx, (payload.length>>8)&0xFF, payload.length&0xFF, (crc>>8)&0xFF, crc&0xFF];
+    const dataBytes = [...header, ...payload];
+    const parity    = rsEncode(dataBytes, mode.ecSymbols);
+    const fullBytes = [...dataBytes, ...parity];
+
+    const bits = [];
+    for (const byte of fullBytes)
+      for (let b = 7; b >= 0; b--) bits.push((byte >> b) & 1);
+
+    // Pad to capacity with deterministic pseudo-random
+    const totalBits = mode.nodesPerArm * ARM_COUNT;
+    const h = hashText(text);
+    while (bits.length < totalBits)
+      bits.push((bits[bits.length-1] ^ ((h >> (bits.length % 32)) & 1)) & 1);
+
+    return {
+      bits:         bits.slice(0, totalBits),
+      mode:         modeName,
+      text,
+      payloadBytes: payload.length,
+      totalBits,
+      crc,
+      hash:         h,
+    };
+  }
+
+  // ── DECODE ─────────────────────────────────────────────────────────────────
+  function decode(bits, modeName) {
+    try {
+      const mode = MODES[modeName];
+      if (!mode) return { ok:false, text:'', error:'unknown mode' };
+
+      const bytes = [];
+      for (let i = 0; i+7 < bits.length; i += 8) {
+        let b = 0;
+        for (let j = 0; j < 8; j++) b = (b<<1) | (bits[i+j] || 0);
+        bytes.push(b);
+      }
+
+      const payLen    = (bytes[2]<<8) | bytes[3];
+      const storedCRC = (bytes[4]<<8) | bytes[5];
+
+      if (payLen <= 0 || payLen > 500) return { ok:false, text:'', error:'bad length:'+payLen };
+
+      const payloadBytes = bytes.slice(6, 6+payLen);
+      if (payloadBytes.length < payLen) return { ok:false, text:'', error:'truncated' };
+
+      // RS check only over header+payload+parity (not padding)
+      const dataLen  = 6 + payLen;
+      const rsBytes  = bytes.slice(0, dataLen + mode.ecSymbols);
+      const hasError = rsHasError(rsBytes, mode.ecSymbols);
+
+      const calcCRC = crc16(payloadBytes);
+      const crcOk   = calcCRC === storedCRC;
+      const text    = _dec.decode(new Uint8Array(payloadBytes));
+
+      return { ok: crcOk && !hasError, text, crcOk, hasError, payLen, storedCRC, calcCRC };
+    } catch(e) {
+      return { ok:false, text:'', error:e.message };
+    }
+  }
+
+  // ── SPIRAL POINT ───────────────────────────────────────────────────────────
+  // TRUE logarithmic spiral: r(θ) = a · e^(b·θ)
+  function spiralPoint(i, n, armOffset, mode, cx, cy, sc, animOffset) {
+    const ao = animOffset || 0;
+    const t  = mode.tMin + (i / n) * (mode.tMax - mode.tMin);
+    const r  = SPIRAL_A * Math.exp(SPIRAL_B * t) * sc;
+    const a  = t + armOffset + ao;
+    return { x: cx + r*Math.cos(a), y: cy + r*Math.sin(a), r, t };
+  }
+
+  // ── DRAW ───────────────────────────────────────────────────────────────────
+  function draw(canvas, encResult, theme, animOffset) {
+    theme       = theme || 'gold';
+    animOffset  = animOffset || 0;
+
+    const ctx  = canvas.getContext('2d');
+    const W    = canvas.width, H = canvas.height;
+    const cx   = W/2, cy = H/2;
+    const sc   = Math.min(W,H) * 0.38;
+    const clr  = THEMES[theme] || THEMES.gold;
+    const mode = MODES[encResult.mode];
+    const n    = mode.nodesPerArm;
+    const bits = encResult.bits;
+    const sAng = (encResult.hash % 360) * (Math.PI / 180);
+    const OR   = Math.min(W,H) * 0.44;
+
+    // Background
     ctx.fillStyle = clr.bg;
     ctx.fillRect(0, 0, W, H);
 
-    [60, 100, 140, 180].forEach((r, i) => {
+    // Outer ring
+    ctx.beginPath(); ctx.arc(cx,cy,OR,0,Math.PI*2);
+    ctx.strokeStyle=clr.primary+'33'; ctx.lineWidth=1; ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx,cy,OR+6,0,Math.PI*2);
+    ctx.strokeStyle=clr.primary+'11'; ctx.lineWidth=0.5; ctx.stroke();
+
+    // Timing dots
+    const TR = OR * 0.91;
+    for (let i=0; i<24; i++) {
+      const a = (i/24)*Math.PI*2, big = i%3===0;
       ctx.beginPath();
-      ctx.arc(cx, cy, r, 0, Math.PI*2);
-      ctx.strokeStyle = clr.primary + Math.max(5, 20 - i*4).toString(16) + '0';
-      ctx.lineWidth = 0.5;
-      ctx.stroke();
+      ctx.arc(cx+TR*Math.cos(a), cy+TR*Math.sin(a), big?3:1.5, 0, Math.PI*2);
+      ctx.fillStyle=clr.primary; ctx.globalAlpha=big?0.7:0.2; ctx.fill();
+    }
+    ctx.globalAlpha=1;
+
+    // Orientation markers (3 sizes → rotation detection)
+    [10,7,5].forEach((ms,ai) => {
+      const p0 = spiralPoint(0, n, ARM_OFFSETS[ai]+sAng, mode, cx, cy, sc, animOffset);
+      ctx.beginPath(); ctx.arc(p0.x,p0.y,ms+4,0,Math.PI*2);
+      ctx.fillStyle=clr.bg; ctx.fill();
+      ctx.beginPath(); ctx.arc(p0.x,p0.y,ms,0,Math.PI*2);
+      ctx.strokeStyle=clr.primary+'aa'; ctx.lineWidth=1.5; ctx.stroke();
+      ctx.beginPath(); ctx.arc(p0.x,p0.y,ms*0.4,0,Math.PI*2);
+      ctx.fillStyle=clr.primary; ctx.fill();
     });
 
-    const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, 12);
-    g.addColorStop(0, '#ffffff');
-    g.addColorStop(0.5, clr.bright);
-    g.addColorStop(1, clr.primary + '00');
-    ctx.beginPath();
-    ctx.arc(cx, cy, 12, 0, Math.PI*2);
-    ctx.fillStyle = g;
-    ctx.shadowColor = clr.glow;
-    ctx.shadowBlur = 20;
-    ctx.fill();
-    ctx.shadowBlur = 0;
+    // Spiral guide (dim)
+    ARM_OFFSETS.forEach((off,ai) => {
+      ctx.beginPath();
+      for (let i=0; i<n; i++) {
+        const p=spiralPoint(i,n,off+sAng,mode,cx,cy,sc,animOffset);
+        i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y);
+      }
+      ctx.strokeStyle=clr.primary+'0a'; ctx.lineWidth=0.7; ctx.stroke();
+    });
+
+    // Data nodes
+    ARM_OFFSETS.forEach((off,ai) => {
+      for (let i=0; i<n; i++) {
+        const bit = bits[i*ARM_COUNT+ai]===1;
+        const p   = spiralPoint(i,n,off+sAng,mode,cx,cy,sc,animOffset);
+        ctx.beginPath(); ctx.arc(p.x,p.y,bit?4.5:1.8,0,Math.PI*2);
+        if (bit) { ctx.fillStyle=clr.bright+'dd'; ctx.shadowColor=clr.glow; ctx.shadowBlur=6; }
+        else     { ctx.fillStyle=clr.dim; ctx.shadowBlur=0; }
+        ctx.fill();
+      }
+      ctx.shadowBlur=0;
+      // End cap
+      const ep = spiralPoint(n-1,n,off+sAng,mode,cx,cy,sc,animOffset);
+      ctx.beginPath(); ctx.arc(ep.x,ep.y,8,0,Math.PI*2); ctx.fillStyle=clr.bg; ctx.fill();
+      ctx.beginPath(); ctx.arc(ep.x,ep.y,5,0,Math.PI*2); ctx.fillStyle=clr.primary; ctx.fill();
+    });
+
+    // Cardinal guides
+    [0,Math.PI/2,Math.PI,Math.PI*3/2].forEach(a => {
+      ctx.beginPath();
+      ctx.moveTo(cx+OR*1.05*Math.cos(a), cy+OR*1.05*Math.sin(a));
+      ctx.lineTo(cx, cy);
+      ctx.strokeStyle=clr.primary+'18'; ctx.lineWidth=0.5;
+      ctx.setLineDash([2,6]); ctx.stroke();
+    });
+    ctx.setLineDash([]);
+
+    // Center glow
+    const glow=ctx.createRadialGradient(cx,cy,6,cx,cy,26);
+    glow.addColorStop(0,clr.primary+'33'); glow.addColorStop(1,'transparent');
+    ctx.beginPath(); ctx.arc(cx,cy,26,0,Math.PI*2); ctx.fillStyle=glow; ctx.fill();
+
+    // Pancer center: solid→void→solid→void
+    [[18,'#000000'],[12,'#ffffff'],[6,clr.bright],[2,'#ffffff']].forEach(([r,f]) => {
+      ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fillStyle=f;
+      if (r===6){ctx.shadowColor=clr.glow;ctx.shadowBlur=16;}
+      ctx.fill(); ctx.shadowBlur=0;
+    });
   }
 
-  // ── PUBLIC API ──
+  // ── DRAW EMPTY ─────────────────────────────────────────────────────────────
+  function drawEmpty(canvas, theme) {
+    theme = theme || 'gold';
+    const ctx=canvas.getContext('2d'), W=canvas.width, H=canvas.height;
+    const cx=W/2, cy=H/2, clr=THEMES[theme]||THEMES.gold;
+    ctx.fillStyle=clr.bg; ctx.fillRect(0,0,W,H);
+    [60,100,140,180].forEach((r,i)=>{
+      ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2);
+      ctx.strokeStyle=clr.primary+['14','0e','08','04'][i]; ctx.lineWidth=0.5; ctx.stroke();
+    });
+    const g=ctx.createRadialGradient(cx,cy,0,cx,cy,14);
+    g.addColorStop(0,'#fff'); g.addColorStop(0.5,clr.bright); g.addColorStop(1,clr.primary+'00');
+    ctx.beginPath(); ctx.arc(cx,cy,14,0,Math.PI*2);
+    ctx.fillStyle=g; ctx.shadowColor=clr.glow; ctx.shadowBlur=20; ctx.fill(); ctx.shadowBlur=0;
+  }
+
+  // ── OTSU THRESHOLD ─────────────────────────────────────────────────────────
+  function otsuThreshold(imgData, W, H) {
+    const hist=new Array(256).fill(0); let tot=0;
+    for (let y=0;y<H;y+=2) for (let x=0;x<W;x+=2) {
+      const i=(y*W+x)*4;
+      hist[Math.round((imgData[i]+imgData[i+1]+imgData[i+2])/3)]++; tot++;
+    }
+    let sumAll=0;
+    for (let i=0;i<256;i++) sumAll+=i*hist[i];
+    let wB=0,sB=0,mx=0,thresh=128;
+    for (let i=0;i<256;i++) {
+      wB+=hist[i]; if(!wB)continue;
+      const wF=tot-wB; if(!wF)break;
+      sB+=i*hist[i];
+      const v=wB*wF*Math.pow(sB/wB-(sumAll-sB)/wF,2);
+      if(v>mx){mx=v;thresh=i;}
+    }
+    return thresh;
+  }
+
+  // ── SCAN ───────────────────────────────────────────────────────────────────
+  // modeName: mode string, or 'auto' to try all modes
+  function scan(canvas, modeName) {
+    modeName = modeName || 'auto';
+    const ctx     = canvas.getContext('2d');
+    const W       = canvas.width, H = canvas.height;
+    const cx      = W/2, cy = H/2;
+    const sc      = Math.min(W,H) * 0.38;
+    const imgData = ctx.getImageData(0,0,W,H).data;
+    const thresh  = otsuThreshold(imgData, W, H);
+
+    const tryModes   = modeName==='auto' ? Object.keys(MODES) : [modeName];
+    const angleSteps = 12;
+
+    for (const mn of tryModes) {
+      const mode = MODES[mn];
+      const n    = mode.nodesPerArm;
+
+      for (let ai = 0; ai < angleSteps; ai++) {
+        const ao   = (ai / angleSteps) * Math.PI * 2;
+        const bits = [];
+
+        for (let i=0; i<n; i++) {
+          for (let arm=0; arm<ARM_COUNT; arm++) {
+            const p   = spiralPoint(i, n, ARM_OFFSETS[arm]+ao, mode, cx, cy, sc, 0);
+            const px  = Math.max(0,Math.min(W-1,Math.round(p.x)));
+            const py  = Math.max(0,Math.min(H-1,Math.round(p.y)));
+            const idx = (py*W+px)*4;
+            bits.push((imgData[idx]+imgData[idx+1]+imgData[idx+2])/3 < thresh ? 1 : 0);
+          }
+        }
+
+        const res = decode(bits, mn);
+        if (res.crcOk && res.text && res.text.length > 0)
+          return { ...res, scannedMode:mn, angleOffset:ao };
+      }
+    }
+    return { ok:false, text:'', error:'not found' };
+  }
+
+  // ── SYKLUS COORDINATE ─────────────────────────────────────────────────────
+  function syklusCoord(text) {
+    const h     = hashText(text);
+    const theta = ((h % 10000) / 10000) * 100 - 50;
+    const r_fwd = Math.exp(PANCER * theta);
+    const r_rev = Math.exp(-PANCER * theta);
+    const xf    = r_fwd * Math.cos(theta);
+    const yf    = r_fwd * Math.sin(theta);
+    const xr    = r_rev * Math.cos(theta);
+    const yr    = r_rev * Math.sin(theta);
+    const clamp = v => Math.max(0, Math.min(999999, Math.floor(v)));
+    const norm  = (v,mn,mx) => clamp((v-mn)/(mx-mn)*1e6);
+    const pad   = n => n.toString().padStart(6,'0');
+    const sz    = norm(theta,-50,50);
+    return {
+      theta:   +theta.toFixed(4),
+      forward: pad(norm(xf,-150,150))+pad(norm(yf,-150,150))+pad(sz),
+      reverse: pad(norm(xr,-150,150))+pad(norm(yr,-150,150))+pad(sz),
+      pancer:  PANCER,
+    };
+  }
+
+  // ── DOWNLOAD CANVAS ────────────────────────────────────────────────────────
+  function downloadCanvas(canvas, filename) {
+    filename = filename || 'urip_symbol.png';
+    const a  = document.createElement('a');
+    a.href   = canvas.toDataURL('image/png');
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+  // ── SETUP CANVAS (DPR-aware) ───────────────────────────────────────────────
+  function setupCanvas(canvas, size) {
+    const dpr = window.devicePixelRatio || 1;
+    const s   = size || Math.min(window.innerWidth - 34, 460);
+    canvas.style.width  = s + 'px';
+    canvas.style.height = s + 'px';
+    canvas.width  = s * dpr;
+    canvas.height = s * dpr;
+    const ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    return { size: s, dpr };
+  }
+
+  // ── PUBLIC API ─────────────────────────────────────────────────────────────
   return {
-    VERSION,
-    MODES,
-    THEMES,
-    encode,
-    decode,
-    draw,
-    drawEmpty,
-    hashText,
-    crc16,
-    spiralPoint,
-    // Utils
+    VERSION, MODES, THEMES, PANCER, ARM_COUNT,
+    encode, decode, draw, drawEmpty,
+    scan, syklusCoord,
+    hashText, crc16, spiralPoint,
+    downloadCanvas, setupCanvas,
     autoMode(text) {
-      const bytes = encoder.encode(text).length;
-      if (bytes <= MODES.LITE.maxBytes)     return 'LITE';
-      if (bytes <= MODES.STANDARD.maxBytes) return 'STANDARD';
-      if (bytes <= MODES.DENSE.maxBytes)    return 'DENSE';
+      const b = _enc.encode(text).length;
+      if (b <= MODES.LITE.maxBytes)     return 'LITE';
+      if (b <= MODES.STANDARD.maxBytes) return 'STANDARD';
+      if (b <= MODES.DENSE.maxBytes)    return 'DENSE';
       return 'ULTRA';
     },
     info(text) {
-      const bytes = encoder.encode(text).length;
-      const mode = this.autoMode(text);
+      const bytes = _enc.encode(text).length;
+      const mode  = this.autoMode(text);
       return { bytes, mode, maxBytes: MODES[mode].maxBytes };
-    }
+    },
   };
+
 })();
 
-// Export for Node.js if available
 if (typeof module !== 'undefined') module.exports = URIP;
