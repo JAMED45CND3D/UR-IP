@@ -208,7 +208,8 @@ const URIP = (() => {
     animOffset  = animOffset || 0;
 
     const ctx  = canvas.getContext('2d');
-    const W    = canvas.width, H = canvas.height;
+    const _dpr = window.devicePixelRatio || 1;
+    const W    = canvas.width / _dpr, H = canvas.height / _dpr; // logical size
     const cx   = W/2, cy = H/2;
     const sc   = Math.min(W,H) * 0.38;
     const clr  = THEMES[theme] || THEMES.gold;
@@ -303,7 +304,8 @@ const URIP = (() => {
   // ── DRAW EMPTY ─────────────────────────────────────────────────────────────
   function drawEmpty(canvas, theme) {
     theme = theme || 'gold';
-    const ctx=canvas.getContext('2d'), W=canvas.width, H=canvas.height;
+    const _dpr=window.devicePixelRatio||1;
+    const ctx=canvas.getContext('2d'), W=canvas.width/_dpr, H=canvas.height/_dpr;
     const cx=W/2, cy=H/2, clr=THEMES[theme]||THEMES.gold;
     ctx.fillStyle=clr.bg; ctx.fillRect(0,0,W,H);
     [60,100,140,180].forEach((r,i)=>{
@@ -364,7 +366,7 @@ const URIP = (() => {
             const px  = Math.max(0,Math.min(W-1,Math.round(p.x)));
             const py  = Math.max(0,Math.min(H-1,Math.round(p.y)));
             const idx = (py*W+px)*4;
-            bits.push((imgData[idx]+imgData[idx+1]+imgData[idx+2])/3 < thresh ? 1 : 0);
+            bits.push((imgData[idx]+imgData[idx+1]+imgData[idx+2])/3 > thresh ? 1 : 0);
           }
         }
 
