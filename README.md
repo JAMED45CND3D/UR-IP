@@ -2,7 +2,7 @@
 ### Universal Recognition Information Pattern
 
 > *"Alive before a machine reads it."*
-
+https://jamed45cnd3d.github.io/UR-IP/URIP_App.html
 **UR-IP** adalah sistem kode visual generasi berikutnya.  
 Bukan sekadar pengganti QR Code — tapi evolusi filosofisnya.
 
