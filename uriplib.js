@@ -29,10 +29,12 @@ const URIP = (() => {
 
   const MODES = {
     // maxBytes = floor(nodesPerArm*3/8) - 6(header) - ecSymbols
-    LITE:     { nodesPerArm:  60, tMin:0.5, tMax: 4*Math.PI, label:'LITE',     maxBytes:  12, ecSymbols:  4 },
-    STANDARD: { nodesPerArm: 150, tMin:0.5, tMax: 6*Math.PI, label:'STANDARD', maxBytes:  42, ecSymbols:  8 },
-    DENSE:    { nodesPerArm: 360, tMin:0.5, tMax: 8*Math.PI, label:'DENSE',    maxBytes: 117, ecSymbols: 12 },
-    ULTRA:    { nodesPerArm: 900, tMin:0.5, tMax:10*Math.PI, label:'ULTRA',    maxBytes: 315, ecSymbols: 16 },
+    // tMax bound: SPIRAL_A*exp(SPIRAL_B*tMax)*0.38 < 0.5 → tMax < 12.064 rad (3.84π)
+    // All values below verified safe for any canvas size
+    LITE:     { nodesPerArm:  60, tMin:0.5, tMax:3.0*Math.PI, label:'LITE',     maxBytes:  12, ecSymbols:  4 },
+    STANDARD: { nodesPerArm: 150, tMin:0.5, tMax:3.5*Math.PI, label:'STANDARD', maxBytes:  42, ecSymbols:  8 },
+    DENSE:    { nodesPerArm: 360, tMin:0.5, tMax:3.7*Math.PI, label:'DENSE',    maxBytes: 117, ecSymbols: 12 },
+    ULTRA:    { nodesPerArm: 900, tMin:0.5, tMax:3.8*Math.PI, label:'ULTRA',    maxBytes: 315, ecSymbols: 16 },
   };
 
   const THEMES = {
@@ -213,7 +215,8 @@ const URIP = (() => {
     const mode = MODES[encResult.mode];
     const n    = mode.nodesPerArm;
     const bits = encResult.bits;
-    const sAng = (encResult.hash % 360) * (Math.PI / 180);
+    // FIX: snap to 12-step grid (every 30°) so scan() can always match
+    const sAng = (encResult.hash % 12) * (Math.PI * 2 / 12);
     const OR   = Math.min(W,H) * 0.44;
 
     // Background
@@ -345,7 +348,7 @@ const URIP = (() => {
     const thresh  = otsuThreshold(imgData, W, H);
 
     const tryModes   = modeName==='auto' ? Object.keys(MODES) : [modeName];
-    const angleSteps = 12;
+    const angleSteps = 36; // 10° resolution — safe margin for snapped 30° draw angles
 
     for (const mn of tryModes) {
       const mode = MODES[mn];
