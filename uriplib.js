@@ -21,20 +21,21 @@ const URIP = (() => {
 
   // ── CONSTANTS ──────────────────────────────────────────────────────────────
   const VERSION    = '4.0';
-  const PANCER     = 0.0318;        // EGO identity constant
-  const SPIRAL_A   = 0.15;          // visual spiral scale
-  const SPIRAL_B   = 0.18;          // visual spiral curvature
+  const PANCER     = 0.0318;        // SYKLUS identity constant — ∅0.0318
+  const DECAY      = 749;           // SYKLUS intensity decay
+  const TIME_SCALE = 27005;         // SYKLUS resonance period
+  const SPIRAL_A   = 0.15;          // canvas scale factor
+  const SPIRAL_B   = PANCER;        // spiral curvature = PANCER = 0.0318
   const ARM_COUNT  = 3;
   const ARM_OFFSETS = [0, 2*Math.PI/3, 4*Math.PI/3];
 
   const MODES = {
     // maxBytes = floor(nodesPerArm*3/8) - 6(header) - ecSymbols
-    // tMax bound: SPIRAL_A*exp(SPIRAL_B*tMax)*0.38 < 0.5 → tMax < 12.064 rad (3.84π)
-    // All values below verified safe for any canvas size
-    LITE:     { nodesPerArm:  60, tMin:0.5, tMax:3.0*Math.PI, label:'LITE',     maxBytes:  12, ecSymbols:  4 },
-    STANDARD: { nodesPerArm: 150, tMin:0.5, tMax:3.5*Math.PI, label:'STANDARD', maxBytes:  42, ecSymbols:  8 },
-    DENSE:    { nodesPerArm: 360, tMin:0.5, tMax:3.7*Math.PI, label:'DENSE',    maxBytes: 117, ecSymbols: 12 },
-    ULTRA:    { nodesPerArm: 900, tMin:0.5, tMax:3.8*Math.PI, label:'ULTRA',    maxBytes: 315, ecSymbols: 16 },
+    // r(θ)=SPIRAL_A·e^(PANCER·θ)·sc — SYKLUS true spiral, tMax<21.74π (68.29 rad)
+    LITE:     { nodesPerArm:  60, tMin: 0.5, tMax:15.0*Math.PI, label:'LITE',     maxBytes:  12, ecSymbols:  4 },
+    STANDARD: { nodesPerArm: 150, tMin: 0.5, tMax:20.0*Math.PI, label:'STANDARD', maxBytes:  42, ecSymbols:  8 },
+    DENSE:    { nodesPerArm: 360, tMin:20.0, tMax:21.0*Math.PI, label:'DENSE',    maxBytes: 117, ecSymbols: 12 },
+    ULTRA:    { nodesPerArm: 900, tMin:30.0, tMax:21.5*Math.PI, label:'ULTRA',    maxBytes: 315, ecSymbols: 16 },
   };
 
   const THEMES = {
@@ -209,14 +210,14 @@ const URIP = (() => {
 
     const ctx  = canvas.getContext('2d');
     const _dpr = window.devicePixelRatio || 1;
-    const W    = canvas.width / _dpr, H = canvas.height / _dpr; // logical size
+    const W    = canvas.width / _dpr, H = canvas.height / _dpr;
     const cx   = W/2, cy = H/2;
     const sc   = Math.min(W,H) * 0.38;
     const clr  = THEMES[theme] || THEMES.gold;
     const mode = MODES[encResult.mode];
     const n    = mode.nodesPerArm;
     const bits = encResult.bits;
-    // FIX: snap to 12-step grid (every 30°) so scan() can always match
+    // FIX: snap to 12-step grid (30° each) so scan() always matches
     const sAng = (encResult.hash % 12) * (Math.PI * 2 / 12);
     const OR   = Math.min(W,H) * 0.44;
 
@@ -304,8 +305,8 @@ const URIP = (() => {
   // ── DRAW EMPTY ─────────────────────────────────────────────────────────────
   function drawEmpty(canvas, theme) {
     theme = theme || 'gold';
-    const _dpr=window.devicePixelRatio||1;
-    const ctx=canvas.getContext('2d'), W=canvas.width/_dpr, H=canvas.height/_dpr;
+    const _dpr2=window.devicePixelRatio||1;
+    const ctx=canvas.getContext('2d'), W=canvas.width/_dpr2, H=canvas.height/_dpr2;
     const cx=W/2, cy=H/2, clr=THEMES[theme]||THEMES.gold;
     ctx.fillStyle=clr.bg; ctx.fillRect(0,0,W,H);
     [60,100,140,180].forEach((r,i)=>{
@@ -350,7 +351,7 @@ const URIP = (() => {
     const thresh  = otsuThreshold(imgData, W, H);
 
     const tryModes   = modeName==='auto' ? Object.keys(MODES) : [modeName];
-    const angleSteps = 36; // 10° resolution — safe margin for snapped 30° draw angles
+    const angleSteps = 36; // 10° resolution
 
     for (const mn of tryModes) {
       const mode = MODES[mn];
@@ -426,7 +427,7 @@ const URIP = (() => {
 
   // ── PUBLIC API ─────────────────────────────────────────────────────────────
   return {
-    VERSION, MODES, THEMES, PANCER, ARM_COUNT,
+    VERSION, MODES, THEMES, PANCER, DECAY, TIME_SCALE, ARM_COUNT,
     encode, decode, draw, drawEmpty,
     scan, syklusCoord,
     hashText, crc16, spiralPoint,
